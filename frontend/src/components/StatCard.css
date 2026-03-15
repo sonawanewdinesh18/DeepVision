@@ -1,0 +1,116 @@
+/* Modern Clean Statistics Cards */
+.stat-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: relative;
+  min-height: 120px;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: #3b82f6;
+}
+
+.stat-header {
+  margin-bottom: 16px;
+}
+
+.stat-label {
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 8px;
+  line-height: 1;
+}
+
+.stat-description {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.stat-trend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.stat-trend.positive {
+  color: #059669;
+  background: #ecfdf5;
+}
+
+.stat-trend.negative {
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+/* Dark theme support */
+[data-theme="dark"] .stat-card {
+  background: #1f2937;
+  border-color: #374151;
+  color: #f9fafb;
+}
+
+[data-theme="dark"] .stat-card:hover {
+  border-color: #60a5fa;
+}
+
+[data-theme="dark"] .stat-value {
+  color: #f9fafb;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .stat-card {
+    padding: 20px;
+    min-height: 110px;
+  }
+  
+  .stat-value {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stat-card {
+    padding: 16px;
+    min-height: 100px;
+  }
+  
+  .stat-value {
+    font-size: 24px;
+  }
+  
+  .stat-label {
+    font-size: 12px;
+  }
+  
+  .stat-description {
+    font-size: 13px;
+  }
+}
