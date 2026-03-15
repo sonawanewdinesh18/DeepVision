@@ -1,0 +1,10 @@
+/**
+ * Auth Components Index
+ * Export all auth-related components
+ */
+
+export { AnimatedCharacters } from './AnimatedCharacters';
+export { EyeBall } from './EyeBall';
+export { Pupil } from './Pupil';
+export { GoogleButton } from './GoogleButton';
+export { CHARACTER_CONFIG, ANIMATION_CONFIG, CONTAINER_CONFIG } from './characterConfig';

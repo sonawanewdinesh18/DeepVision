@@ -1,0 +1,290 @@
+/* =========================================================
+   SignIn.css
+   This file contains all the styling for the Sign In page.
+   It uses a split-screen design: 
+   Left: Dark background with glowing effects and animations.
+   Right: Clean, minimal light/dark authentication form.
+   ========================================================= */
+
+/* ── 1. Main Page Layout ──────────────────── */
+/* The main container splits the screen into 2 columns (left panel, right form) */
+.lpage {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── 2. Left Dark Panel (Brand & Background) ──────── */
+/* The dark container on the left side */
+.lpanel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: #0d0d0f;
+  overflow: hidden;
+  height: 100%;
+}
+
+/* Grid pattern overlay on the left panel */
+.lpanel-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(99,179,237,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,179,237,0.05) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+}
+
+/* Glowing circular orbs in the top-left and bottom-right */
+.lpanel-glow { position: absolute; border-radius: 50%; pointer-events: none; }
+.lpanel-glow--tl {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(99,179,237,0.12) 0%, transparent 65%);
+  top: -200px; left: -200px;
+}
+.lpanel-glow--br {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(123,47,247,0.15) 0%, transparent 65%);
+  bottom: -160px; right: -120px;
+}
+
+/* ── 3. Brand Logo & Name ────────────────── */
+.lbrand {
+  position: absolute; top: 36px; left: 40px;
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; z-index: 2;
+}
+.lbrand-logo {
+  width: 34px !important; height: 34px !important;
+  max-width: 34px !important; object-fit: contain; flex-shrink: 0;
+}
+.lbrand-name { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.025em; white-space: nowrap; }
+
+/* Gradient text colors for the logo text "DeepVision" */
+.lbrand-deep {
+  background: linear-gradient(150deg,#63B3ED 0%,#2B6CB0 55%,#3B48CC 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.lbrand-vision {
+  background: linear-gradient(150deg,#553ECC 0%,#7B2FF7 55%,#5B21B6 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+
+/* ── 4. 3D Characters Alignment ──────────── */
+/* Pushes the animated eyeball characters toward the bottom of the left panel */
+.lcharacters {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  display: flex; justify-content: center; align-items: flex-end;
+  z-index: 1;
+}
+.lcharacters > div {
+  transform: scale(1.08); /* Makes characters slightly larger */
+  transform-origin: bottom center;
+}
+
+/* ── 5. Right Form Background ──────────────── */
+.lform-bg {
+  height: 100%;
+  overflow-y: auto; /* Allows scrolling if screen is too small */
+  background: #f2f2f7; /* Light mode background */
+}
+/* Adapts to dark theme by switching to dark background */
+html.dark .lform-bg, [data-theme="dark"] .lform-bg { background: #0f0f18; }
+
+.lform-inner {
+  min-height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px 32px;
+}
+
+/* ── 6. Form Card ──────────────────────────── */
+/* The main white box containing the inputs */
+.lform-card {
+  width: 100%; max-width: 400px;
+  background: #fff;
+  border-radius: 24px;
+  padding: 36px 32px 32px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.08), 0 1px 8px rgba(0,0,0,0.04);
+  display: flex; flex-direction: column; gap: 18px;
+}
+html.dark .lform-card, [data-theme="dark"] .lform-card {
+  background: #1a1a2a;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.55);
+}
+
+/* Small logo visible inside the card */
+.lcard-logo-wrap {
+  display: flex; justify-content: center; align-items: center;
+}
+.lcard-logo {
+  width: 64px; height: 64px; object-fit: contain;
+}
+
+/* Titles "Welcome Back" */
+.lcard-header { display: flex; flex-direction: column; gap: 4px; text-align: center; }
+.lcard-title {
+  font-size: 1.75rem; font-weight: 900;
+  letter-spacing: -0.03em; color: #0f0f14; line-height: 1.1;
+}
+html.dark .lcard-title, [data-theme="dark"] .lcard-title { color: #f0f0fa; }
+.lcard-sub { color: #8a8aa8; font-size: 0.875rem; }
+
+/* ── 7. Google Auth Button ─────────────────── */
+/* Fully restyled to match the 100% width and padding of the Sign In button */
+.lgoogle-wrap .google-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important; /* Forces the button to take full width */
+  padding: 15px !important; /* Same exact padding as the Sign In pill */
+  gap: 8px !important; 
+
+  background: #1a73e8 !important; /* Bold Google Blue */
+  border: none !important;
+  border-radius: 50px !important; /* Rounded pill shape */
+  color: #fff !important;
+  font-family: inherit !important;
+  font-size: 0.96rem !important; /* Same font size as Sign In */
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 16px rgba(26,115,232,0.3) !important;
+  transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s !important;
+}
+
+/* Hover effects */
+.lgoogle-wrap .google-button:hover:not(:disabled) {
+  background: #1557b0 !important;
+  box-shadow: 0 6px 20px rgba(26,115,232,0.4) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* ── 8. Dividers ("OR") ────────────────────── */
+.lor {
+  display: flex; align-items: center; gap: 12px;
+  color: #b0b0c8; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em;
+}
+/* Creates lines on the left and right of "OR" */
+.lor::before, .lor::after { content: ''; flex: 1; height: 1px; background: #e4e4f0; }
+html.dark .lor::before, html.dark .lor::after,
+[data-theme="dark"] .lor::before, [data-theme="dark"] .lor::after { background: rgba(255,255,255,0.08); }
+
+/* ── 9. Form Inputs & Labels ───────────────── */
+.lform { display: flex; flex-direction: column; gap: 14px; }
+.lfield-group { display: flex; flex-direction: column; gap: 6px; }
+
+/* Label text (EMAIL ADDRESS, PASSWORD) */
+.lfield-label {
+  font-size: 0.7rem; font-weight: 800;
+  letter-spacing: 0.1em; color: #3a3a50; text-transform: uppercase;
+}
+html.dark .lfield-label, [data-theme="dark"] .lfield-label { color: #9090b8; }
+
+/* Input wrapper for icon + text area */
+.lfield {
+  position: relative;
+  background: #f4f4f9; border: 1.5px solid #e0e0ea;
+  border-radius: 12px; display: flex; align-items: center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+html.dark .lfield, [data-theme="dark"] .lfield {
+  background: #12121e; border-color: rgba(255,255,255,0.1);
+}
+/* Blue glow when clicking into an input */
+.lfield--focus { border-color: #1a73e8; box-shadow: 0 0 0 3px rgba(26,115,232,0.15); }
+
+/* Input icons (Mail, Lock) */
+.lfield-icon {
+  position: absolute; left: 14px;
+  color: #a0a0be; pointer-events: none; flex-shrink: 0; transition: color 0.2s;
+}
+.lfield--focus .lfield-icon { color: #1a73e8; }
+
+/* Actual input typing area */
+.lfield input {
+  display: block; width: 100%;
+  padding: 14px 44px 14px 40px; /* Space inside input so text doesn't hit icons */
+  background: transparent; border: none; outline: none;
+  font-family: inherit; font-size: 0.9rem; color: #0f0f14; border-radius: 12px;
+}
+html.dark .lfield input, [data-theme="dark"] .lfield input { color: #f0f0fa; }
+.lfield input::placeholder { color: #b8b8d0; }
+
+/* Eye icon to reveal password */
+.lfield-eye {
+  position: absolute; right: 12px;
+  background: transparent; border: none;
+  color: #a0a0be; cursor: pointer; padding: 4px;
+  display: flex; align-items: center; transition: color 0.2s;
+}
+.lfield-eye:hover { color: #1a73e8; }
+.lfield-hint { font-size: 0.74rem; color: #a0a0bc; margin-top: 2px; }
+
+/* Forgot password link alignment */
+.lforgot {
+  align-self: flex-end; font-size: 0.82rem; font-weight: 600;
+  color: #1a73e8; text-decoration: none; transition: opacity 0.2s; margin-top: 2px;
+}
+.lforgot:hover { opacity: 0.75; }
+
+/* ── 10. Main Submit Button (Sign In) ──────── */
+/* Primary action button (pill shape) */
+.lsubmit {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 15px; /* Matches Google Button */
+  background: #111111;
+  color: #ffffff;
+  border: none; border-radius: 50px;
+  font-family: inherit; font-size: 0.96rem; font-weight: 700; cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+}
+html.dark .lsubmit, [data-theme="dark"] .lsubmit {
+  background: #ffffff;
+  color: #111111;
+}
+/* Pop up slightly when hovering */
+.lsubmit:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+.lsubmit:active:not(:disabled) { transform: translateY(0); }
+.lsubmit:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* Switch back and forth text at the very bottom */
+.lswitch { text-align: center; font-size: 0.855rem; color: #8a8aaa; }
+.llink { color: #1a73e8; font-weight: 700; text-decoration: none; transition: opacity 0.2s; }
+.llink:hover { opacity: 0.75; }
+
+/* ── 11. Error Handlers & Spinners ─────────── */
+/* Red box shown when error occurs */
+.lerror {
+  padding: 10px 14px;
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: 10px; color: #ef4444; font-size: 0.84rem;
+}
+
+/* Loading spinner inside the button */
+.lspin {
+  display: inline-block; width: 18px; height: 18px;
+  border: 2.5px solid rgba(0,0,0,0.15);
+  border-top-color: #111; border-radius: 50%;
+  animation: lspin 0.65s linear infinite;
+}
+html.dark .lspin, [data-theme="dark"] .lspin {
+  border-color: rgba(255,255,255,0.2);
+  border-top-color: #111;
+}
+@keyframes lspin { to { transform: rotate(360deg); } }
+
+/* Match indicators */
+.lmatch { font-size: 0.75rem; margin-top: 2px; }
+.lmatch--ok { color: #22c55e; }
+.lmatch--err { color: #ef4444; }
+
+/* ── 12. Mobile Responsiveness ─────────────── */
+/* Hides the left dark panel on smaller screens and expands the form */
+@media (max-width: 860px) {
+  .lpage { grid-template-columns: 1fr; height: auto; }
+  .lpanel { display: none; }
+  .lform-bg { height: auto; min-height: 100vh; }
+  .lform-inner { padding: 40px 20px; }
+}
