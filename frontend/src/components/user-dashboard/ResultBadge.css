@@ -1,0 +1,29 @@
+/* ============================================================
+   ResultBadge — DeepVision
+   ============================================================ */
+.result-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.size-sm { padding: 4px 10px; font-size: 0.72rem; }
+.size-md { padding: 6px 14px; font-size: 0.85rem; }
+.size-lg { padding: 8px 18px; font-size: 1rem; }
+
+.badge-authentic {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--color-success);
+}
+
+.badge-deepfake {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--color-error);
+}
+
+.badge-icon {
+  flex-shrink: 0;
+}
