@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import {
-    Home, Sparkles, Layers, Users, CreditCard, Mail, Sun, Moon, Menu, X,
+    Home, Sparkles, Layers, Users, CreditCard, Mail, Sun, Moon, Menu, X, LogOut, AppWindow
 } from 'lucide-react';
 import logo from '../assets/LOGO.png';
 
@@ -17,9 +18,19 @@ const NAV_LINKS = [
 
 export default function Navbar() {
     const { isDark, toggle } = useTheme();
+    const { user, isAdmin, signOut } = useAuth();
+    const navigate = useNavigate();
+
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
     const [activeLink, setActiveLink] = useState('#home');
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    // Profile variables
+    const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+    const displayEmail = user?.email || 'user@example.com';
+    const initials = displayName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 24);
@@ -27,26 +38,42 @@ export default function Navbar() {
         return () => window.removeEventListener('scroll', onScroll);
     }, []);
 
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleLogout = async () => {
+        setDropdownOpen(false);
+        await signOut();
+        navigate('/');
+    };
+
     return (
         <>
             <nav style={{
-                position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000, height: 64,
+                position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000, height: 72,
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 padding: '0 32px',
-                background: scrolled ? (isDark ? '#000000' : '#ffffff') : 'transparent',
+                background: scrolled ? (isDark ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.85)') : 'transparent',
                 backdropFilter: scrolled ? 'blur(24px)' : 'none',
                 WebkitBackdropFilter: scrolled ? 'blur(24px)' : 'none',
                 borderBottom: `1px solid ${scrolled ? 'var(--border-color)' : 'transparent'}`,
                 transition: 'all 0.35s ease',
             }}>
 
-                {/* Logo */}
+                {/* Left: Logo */}
                 <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', flexShrink: 0 }}>
                     <img src={logo} alt="DeepVision" style={{ height: 40, width: 'auto' }} />
                     <span style={{
-                        fontWeight: 900, fontSize: '1.15rem', letterSpacing: '-0.02em',
+                        fontWeight: 900, fontSize: '1.25rem', letterSpacing: '-0.02em',
                         lineHeight: 1,
-                        filter: 'drop-shadow(0 0 10px rgba(99,179,237,0.35)) drop-shadow(0 0 20px rgba(108,63,245,0.25))',
                     }}>
                         <span style={{
                             background: 'linear-gradient(160deg, #63B3ED 0%, #2B6CB0 55%, #3B48CC 100%)',
@@ -61,7 +88,7 @@ export default function Navbar() {
                     </span>
                 </Link>
 
-                {/* Desktop nav links — pill container */}
+                {/* Center: Desktop nav links — pill container */}
                 <div className="nav-pill-container nav-links-desktop">
                     {NAV_LINKS.map(({ label, href, Icon }) => {
                         const isActive = activeLink === href;
@@ -72,20 +99,60 @@ export default function Navbar() {
                                 className={`nav-link ${isActive ? 'nav-link--active' : ''}`}
                                 onClick={() => setActiveLink(href)}
                             >
-                                <Icon size={13} strokeWidth={2.5} className="nav-link-icon" />
+                                <Icon size={14} strokeWidth={isActive ? 2.5 : 2} className="nav-link-icon" />
                                 <span className="nav-link-label">{label}</span>
                             </a>
                         );
                     })}
                 </div>
 
-                {/* Right side */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                    <Link to="/signin" className="btn btn-ghost nav-action-btn">Sign In</Link>
-                    <Link to="/signup" className="btn btn-primary nav-action-btn">Sign Up</Link>
+                {/* Right side: Auth & Theme */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                    
+                    {!user ? (
+                        <>
+                            <Link to="/signin" className="nav-btn-outline nav-action-btn">Sign In</Link>
+                            <Link to="/signup" className="nav-btn-primary nav-action-btn">Sign Up</Link>
+                        </>
+                    ) : (
+                        <div className="profile-container" ref={dropdownRef}>
+                            <button
+                                className="user-avatar"
+                                onClick={() => setDropdownOpen(!dropdownOpen)}
+                                aria-label="User profile"
+                            >
+                                {initials}
+                            </button>
+
+                            {dropdownOpen && (
+                                <div className="profile-dropdown-menu">
+                                    <div className="dropdown-header">
+                                        <p className="user-label">Logged in as</p>
+                                        <p className="user-name">{displayName}</p>
+                                        <p className="user-email">{displayEmail}</p>
+                                    </div>
+                                    <div className="dropdown-divider" />
+                                    <Link 
+                                        to={isAdmin ? "/admin-dashboard" : "/user-dashboard"} 
+                                        className="dropdown-item"
+                                        onClick={() => setDropdownOpen(false)}
+                                    >
+                                        <AppWindow size={16} />
+                                        <span>Dashboard</span>
+                                    </Link>
+                                    <button className="dropdown-item danger" onClick={handleLogout}>
+                                        <LogOut size={16} />
+                                        <span>Log Out</span>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     <button onClick={toggle} className="theme-toggle-btn" aria-label="Toggle theme">
-                        {isDark ? <Sun size={15} strokeWidth={2.2} /> : <Moon size={15} strokeWidth={2.2} />}
+                        {isDark ? <Sun size={16} strokeWidth={2.2} /> : <Moon size={16} strokeWidth={2.2} />}
                     </button>
+
                     <button className="mobile-menu-btn" onClick={() => setMobileOpen(o => !o)} aria-label="Menu">
                         {mobileOpen ? <X size={20} /> : <Menu size={20} />}
                     </button>
@@ -95,140 +162,303 @@ export default function Navbar() {
             {/* Mobile drawer */}
             {mobileOpen && (
                 <div style={{
-                    position: 'fixed', top: 64, left: 0, right: 0, zIndex: 999,
+                    position: 'fixed', top: 72, left: 0, right: 0, zIndex: 999,
                     background: 'var(--bg-card)', borderBottom: '1px solid var(--border-color)',
-                    padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 4,
+                    padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 8,
                     backdropFilter: 'blur(24px)',
                 }}>
                     {NAV_LINKS.map(({ label, href, Icon }) => (
                         <a key={label} href={href} className="nav-link-mobile" onClick={() => setMobileOpen(false)}>
-                            <Icon size={14} /> {label}
+                            <Icon size={16} /> {label}
                         </a>
                     ))}
-                    <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                        <Link to="/signin" className="btn btn-ghost" style={{ flex: 1, justifyContent: 'center' }}>Sign In</Link>
-                        <Link to="/signup" className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }}>Sign Up</Link>
+                    <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+                        {!user ? (
+                            <>
+                                <Link to="/signin" className="nav-btn-outline" style={{ flex: 1, justifyContent: 'center' }}>Sign In</Link>
+                                <Link to="/signup" className="nav-btn-primary" style={{ flex: 1, justifyContent: 'center' }}>Sign Up</Link>
+                            </>
+                        ) : (
+                            <Link to={isAdmin ? "/admin-dashboard" : "/user-dashboard"} className="nav-btn-primary" style={{ flex: 1, justifyContent: 'center' }}>
+                                Go to Dashboard
+                            </Link>
+                        )}
                     </div>
                 </div>
             )}
 
+            {/* Scoped CSS using styled tags */}
             <style>{`
-        /* Pill outer container */
+        /* Center Pill Container */
         .nav-pill-container {
           display: flex;
           align-items: center;
           gap: 2px;
-          padding: 4px;
-          border-radius: 9999px;
-          background: var(--bg-surface);
+          padding: 5px;
+          border-radius: 9999px; /* Ensures fully rounded sides pill */
+          background: var(--bg-surface); /* light gray / dark gray */
           border: 1px solid var(--border-color);
-          flex: 1;
-          justify-content: center;
-          max-width: 600px;
-          margin: 0 auto;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+          flex: 0 1 auto; /* Don't stretch too much */
         }
 
-        /* Each nav link */
+        /* Each nav link inside pill */
         .nav-link {
           display: inline-flex;
           align-items: center;
-          gap: 6px;
-          padding: 6px 14px;
+          gap: 8px;
+          padding: 8px 18px;
           border-radius: 9999px;
           color: var(--text-muted);
-          font-size: 0.855rem;
+          font-size: 0.875rem;
           font-weight: 500;
           text-decoration: none;
           white-space: nowrap;
           position: relative;
-          transition: color 0.2s, background 0.2s;
+          transition: all 0.25s ease;
         }
 
-        /* Hover — subtle lift */
         .nav-link:hover {
           color: var(--text-primary);
-          background: var(--bg-card);
         }
 
-        /* Active — inner white pill + gradient text */
+        /* Active styling inside Pill */
         .nav-link--active {
           position: relative;
           font-weight: 700;
+          background: var(--bg-card); /* Changes based on theme */
+          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+          color: var(--text-primary);
         }
 
-        /* White/card pill behind active link */
-        .nav-link--active::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: 9999px;
-          background: var(--bg-base);
-          box-shadow: 0 1px 8px rgba(0,0,0,0.13);
-          z-index: 0;
-        }
-
-        /* Gradient text — only on the label span */
         .nav-link--active .nav-link-label {
-          position: relative; z-index: 1;
           background: linear-gradient(135deg, #63B3ED 0%, #3B48CC 48%, #7B2FF7 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
 
-        /* Active icon — tinted to cyan */
         .nav-link--active .nav-link-icon {
           color: #63B3ED;
-          position: relative; z-index: 1;
-          filter: drop-shadow(0 0 3px rgba(99,179,237,0.5));
+          filter: drop-shadow(0 0 3px rgba(99,179,237,0.4));
         }
 
-        /* Gradient underline on active */
         .nav-link--active::after {
           content: '';
           position: absolute;
-          bottom: 4px;
-          left: 16px;
-          right: 16px;
-          height: 2px;
+          bottom: 6px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 20px;
+          height: 3px;
           border-radius: 9999px;
-          background: linear-gradient(90deg, #63B3ED 0%, #3B48CC 50%, #7B2FF7 100%);
-          z-index: 1;
+          background: linear-gradient(90deg, #63B3ED 0%, #7B2FF7 100%);
         }
 
-        /* Mobile */
-        .nav-link-mobile {
-          display: flex; align-items: center; gap: 10px;
-          padding: 12px; border-radius: var(--radius-md);
-          color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;
-          text-decoration: none; transition: all 0.2s;
-        }
-        .nav-link-mobile:hover { color: var(--text-primary); background: var(--bg-surface); }
-
-        .nav-action-btn { padding: 7px 18px !important; font-size: 0.855rem !important; }
-
-        .theme-toggle-btn {
-          display: flex; align-items: center; justify-content: center;
-          width: 34px; height: 34px; border-radius: var(--radius-full);
-          background: var(--bg-surface); border: 1px solid var(--border-color);
-          color: var(--text-secondary); cursor: pointer;
+        /* Right Side Primary & Outline Buttons */
+        .nav-btn-outline {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 9px 24px;
+          border-radius: 9999px;
+          border: 1px solid var(--border-color);
+          background: var(--bg-card);
+          color: var(--text-primary);
+          font-size: 0.9rem;
+          font-weight: 600;
+          text-decoration: none;
           transition: all 0.2s;
         }
-        .theme-toggle-btn:hover { color: var(--text-primary); border-color: #63B3ED; }
-
-        .mobile-menu-btn {
-          display: none; align-items: center; justify-content: center;
-          width: 34px; height: 34px; border-radius: var(--radius-md);
-          background: transparent; border: 1px solid var(--border-color);
-          color: var(--text-primary); cursor: pointer;
+        .nav-btn-outline:hover {
+          background: var(--bg-surface);
+          border-color: var(--text-muted);
         }
 
-        @media (max-width: 920px) {
+        .nav-btn-primary {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 9px 26px;
+          border-radius: 9999px;
+          background: linear-gradient(135deg, #63B3ED 0%, #3B48CC 50%, #7B2FF7 100%);
+          color: white;
+          font-size: 0.9rem;
+          font-weight: 600;
+          text-decoration: none;
+          border: none;
+          transition: all 0.2s;
+          box-shadow: 0 4px 14px rgba(59, 72, 204, 0.3);
+        }
+        .nav-btn-primary:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 20px rgba(59, 72, 204, 0.4);
+        }
+
+        /* Theme Toggle Circle */
+        .theme-toggle-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: var(--bg-surface);
+          border: 1px solid var(--border-color);
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .theme-toggle-btn:hover {
+          color: var(--text-primary);
+          border-color: #63B3ED;
+          transform: scale(1.05);
+        }
+
+        /* Profile Avatar / Dropdown */
+        .profile-container {
+          position: relative;
+        }
+        
+        .user-avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, var(--color-primary) 0%, #3B48CC 100%);
+          color: white;
+          border: 2px solid var(--bg-card);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 700;
+          font-size: 0.9rem;
+          cursor: pointer;
+          letter-spacing: 1px;
+          box-shadow: var(--shadow-sm);
+          transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .user-avatar:hover {
+          transform: translateY(-1px);
+          box-shadow: var(--shadow-md);
+        }
+
+        .profile-dropdown-menu {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          width: 240px;
+          margin-top: 12px;
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-lg);
+          padding: 8px;
+          box-shadow: var(--shadow-lg), 0 0 0 1px rgba(0,0,0,0.05);
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          z-index: 100;
+          animation: drop-fade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes drop-fade {
+          from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .dropdown-header {
+          padding: 12px 14px;
+        }
+
+        .user-label {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          margin-bottom: 2px;
+          font-weight: 600;
+        }
+
+        .user-name {
+          font-weight: 700;
+          color: var(--text-primary);
+          font-size: 1rem;
+        }
+
+        .user-email {
+          font-size: 0.85rem;
+          color: var(--text-secondary);
+          word-break: break-all;
+        }
+
+        .dropdown-divider {
+          height: 1px;
+          background: var(--border-color);
+          margin: 4px 0;
+        }
+
+        .dropdown-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 14px;
+          color: var(--text-secondary);
+          background: transparent;
+          border: none;
+          font-size: 0.9rem;
+          font-weight: 600;
+          border-radius: var(--radius-md);
+          cursor: pointer;
+          transition: all 0.2s;
+          text-decoration: none;
+        }
+
+        .dropdown-item:hover {
+          color: var(--text-primary);
+          background: var(--bg-surface);
+        }
+
+        .dropdown-item.danger:hover {
+          color: var(--error-color);
+          background: var(--bg-error-ghost, rgba(239, 68, 68, 0.1));
+        }
+
+        /* Mobile specific adjustments */
+        .mobile-menu-btn {
+          display: none;
+          align-items: center;
+          justify-content: center;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: var(--bg-surface);
+          border: 1px solid var(--border-color);
+          color: var(--text-primary);
+          cursor: pointer;
+        }
+
+        .nav-link-mobile {
+          display: flex; align-items: center; gap: 12px;
+          padding: 14px; border-radius: var(--radius-md);
+          color: var(--text-secondary); font-size: 0.95rem; font-weight: 600;
+          text-decoration: none; transition: all 0.2s;
+        }
+        
+        .nav-link-mobile:hover { 
+          color: var(--text-primary); 
+          background: var(--bg-surface); 
+        }
+
+        @media (max-width: 1024px) {
           .nav-links-desktop { display: none !important; }
           .nav-action-btn { display: none !important; }
+          .profile-container { display: none !important; }
           .mobile-menu-btn { display: flex !important; }
         }
       `}</style>
         </>
+    );
+}
+
     );
 }
