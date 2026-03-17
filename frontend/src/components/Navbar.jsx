@@ -81,7 +81,7 @@ export default function Navbar() {
                             backgroundClip: 'text',
                         }}>Deep</span>
                         <span style={{
-                            background: 'linear-gradient(160deg, #553ECC 0%, #7B2FF7 55%, #5B21B6 100%)',
+                            background: 'linear-gradient(90deg, #63B3ED 0%, #8B5CF6 100%)',
                             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                             backgroundClip: 'text',
                         }}>Vision</span>
@@ -232,7 +232,7 @@ export default function Navbar() {
         }
 
         .nav-link--active .nav-link-label {
-          background: linear-gradient(135deg, #63B3ED 0%, #3B48CC 48%, #7B2FF7 100%);
+          background: linear-gradient(90deg, #63B3ED 0%, #8B5CF6 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -281,14 +281,14 @@ export default function Navbar() {
           justify-content: center;
           padding: 9px 26px;
           border-radius: 9999px;
-          background: linear-gradient(135deg, #63B3ED 0%, #3B48CC 50%, #7B2FF7 100%);
+          background: linear-gradient(90deg, #63B3ED 0%, #8B5CF6 100%);
           color: white;
           font-size: 0.9rem;
           font-weight: 600;
           text-decoration: none;
           border: none;
           transition: all 0.2s;
-          box-shadow: 0 4px 14px rgba(59, 72, 204, 0.3);
+          box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);
         }
         .nav-btn-primary:hover {
           transform: translateY(-1px);
@@ -324,7 +324,7 @@ export default function Navbar() {
           width: 40px;
           height: 40px;
           border-radius: 50%;
-          background: linear-gradient(135deg, var(--color-primary) 0%, #3B48CC 100%);
+          background: linear-gradient(90deg, #63B3ED 0%, #8B5CF6 100%);
           color: white;
           border: 2px solid var(--bg-card);
           display: flex;
@@ -457,8 +457,5 @@ export default function Navbar() {
         }
       `}</style>
         </>
-    );
-}
-
     );
 }

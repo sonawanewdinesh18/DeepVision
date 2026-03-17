@@ -65,14 +65,15 @@
 }
 
 .nav-item.active {
-  background: var(--color-primary-glow, rgba(108, 63, 245, 0.12));
-  color: var(--color-primary);
-  font-weight: 600;
+  background: linear-gradient(90deg, #63B3ED 0%, #8B5CF6 100%) !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
 }
 
 .nav-item.active .nav-icon {
-  color: var(--color-primary);
-  filter: drop-shadow(0 0 4px rgba(108, 63, 245, 0.4));
+  color: #ffffff !important;
+  filter: none;
 }
 
 .nav-icon {

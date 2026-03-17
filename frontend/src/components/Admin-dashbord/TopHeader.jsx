@@ -16,13 +16,13 @@ const TopHeader = ({ setActiveView }) => {
           <img src={logo} alt="DeepVision Logo" className="logo-image" />
           <div className="logo-text">
             <span style={{
-              background: 'linear-gradient(160deg, #63B3ED 0%, #2B6CB0 55%, #3B48CC 100%)',
+              background: 'linear-gradient(90deg, #63B3ED 0%, #8B5CF6 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
             }}>Deep</span>
             <span style={{
-              background: 'linear-gradient(160deg, #553ECC 0%, #7B2FF7 55%, #5B21B6 100%)',
+              background: 'linear-gradient(90deg, #63B3ED 0%, #8B5CF6 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',

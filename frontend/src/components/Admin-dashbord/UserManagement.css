@@ -38,7 +38,7 @@
 
 .add-user-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(108, 63, 245, 0.4);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
 }
 
 /* Stats */
@@ -164,7 +164,7 @@
   width: 34px;
   height: 34px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, #63B3ED 0%, #7B2FF7 100%);
+  background: linear-gradient(90deg, #63B3ED 0%, #8B5CF6 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -362,7 +362,7 @@
 
 .save-btn {
   padding: 9px 20px;
-  background: linear-gradient(135deg, #63B3ED 0%, #3B48CC 48%, #7B2FF7 100%);
+  background: linear-gradient(90deg, #63B3ED 0%, #8B5CF6 100%);
   color: #fff;
   border: none;
   border-radius: var(--radius-full);
@@ -373,4 +373,4 @@
   transition: all var(--transition-base);
 }
 
-.save-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(108, 63, 245, 0.4); }
+.save-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4); }

@@ -2,32 +2,32 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'sonner';
 import logo from '../assets/LOGO.png';
 
 export default function ForgotPassword() {
     const [email, setEmail] = useState('');
     const [focused, setFocused] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [message, setMessage] = useState('');
     const { resetPasswordForEmail } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
-        setMessage('');
-        if (!email) { setError('Please enter your email address.'); return; }
+        if (!email) {
+            toast.error('Please enter your email address.');
+            return;
+        }
 
         try {
             setIsLoading(true);
             const { error } = await resetPasswordForEmail(email);
             if (error) {
-                setError(error.message);
+                toast.error(error.message || 'Failed to send reset link.');
             } else {
-                setMessage('Password reset instructions have been sent to your email.');
+                toast.success('Password reset instructions have been sent to your email.');
             }
         } catch (err) {
-            setError('An unexpected error occurred.');
+            toast.error('An unexpected error occurred.');
         } finally {
             setIsLoading(false);
         }
@@ -64,8 +64,6 @@ export default function ForgotPassword() {
                             </div>
 
                             <form onSubmit={handleSubmit} noValidate className="lform">
-                                {error && <div className="lerror">{error}</div>}
-                                {message && <div className="lsuccess" style={{ padding: '10px 14px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '10px', color: '#22c55e', fontSize: '0.84rem' }}>{message}</div>}
 
                                 <div className="lfield-group">
                                     <label className="lfield-label" htmlFor="fp-email">EMAIL ADDRESS</label>
