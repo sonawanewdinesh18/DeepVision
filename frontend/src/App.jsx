@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { PublicRoute, ProtectedRoute, AdminRoute } from './components/ProtectedRoute';
+import { Toaster } from 'sonner';
 
 import LandingPage from './pages/LandingPage';
 import SignIn from './pages/SignIn';
@@ -15,6 +16,7 @@ import './App.css';
 export default function App() {
   return (
     <ThemeProvider>
+      <Toaster position="top-right" richColors />
       <AuthProvider>
         <BrowserRouter>
           <Routes>

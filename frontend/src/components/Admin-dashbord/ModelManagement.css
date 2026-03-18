@@ -1,0 +1,161 @@
+/* ============================================================
+   ModelManagement — DeepVision Admin
+   ============================================================ */
+.model-management {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.model-management .page-title h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.model-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.model-stats .stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-xl);
+  padding: 20px;
+}
+
+.model-stats .stat-header { margin-bottom: 6px; }
+.model-stats .stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.model-stats .stat-value {
+  font-size: 1.8rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+.model-stats .stat-description {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Models table */
+.models-table-wrapper {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.models-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.models-table-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.add-model-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  background: linear-gradient(135deg, #63B3ED 0%, #3B48CC 48%, #7B2FF7 100%);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.add-model-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(108, 63, 245, 0.4);
+}
+
+/* Model rows */
+.model-row {
+  display: grid;
+  grid-template-columns: 1fr 120px 90px 90px 120px 110px;
+  gap: 0;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-color);
+  align-items: center;
+  transition: background var(--transition-base);
+}
+
+.model-row:last-child { border-bottom: none; }
+.model-row:hover { background: var(--bg-surface); }
+
+.model-row-header {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--bg-surface);
+}
+
+.model-name { font-weight: 600; color: var(--text-primary); font-size: 0.875rem; }
+.model-version, .model-size, .model-date { font-size: 0.82rem; color: var(--text-muted); }
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.status-badge.active   { background: rgba(16, 185, 129, 0.12); color: var(--color-success); }
+.status-badge.inactive { background: rgba(239, 68, 68, 0.12);  color: var(--color-error); }
+.status-badge.training { background: rgba(245, 158, 11, 0.12); color: var(--color-warning); }
+
+.type-badge {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.type-badge.detection   { background: rgba(239, 68, 68, 0.1); color: var(--color-error); }
+.type-badge.recognition { background: var(--color-primary-glow); color: var(--color-primary-light); }
+.type-badge.analysis    { background: rgba(59, 130, 246, 0.1); color: var(--color-info); }
+
+.model-actions { display: flex; align-items: center; gap: 6px; }
+
+.model-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: transparent;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  color: var(--text-muted);
+}
+.model-action-btn:hover { background: var(--bg-surface); color: var(--text-primary); }
+.model-action-btn.danger:hover { background: rgba(239, 68, 68, 0.1); color: var(--color-error); border-color: var(--color-error); }
