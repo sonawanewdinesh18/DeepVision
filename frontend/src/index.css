@@ -220,18 +220,19 @@ button {
 /* Logo gradient: cyan → indigo → purple */
 
 .btn-primary {
-  background: linear-gradient(135deg, #63B3ED 0%, #3B48CC 48%, #7B2FF7 100%);
+  background: linear-gradient(90deg, #63B3ED 0%, #8B5CF6 100%);
   color: #fff;
-  box-shadow: 0 4px 24px rgba(99, 179, 237, 0.25), 0 2px 12px rgba(123, 47, 247, 0.3);
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);
   position: relative;
   overflow: hidden;
+  border-radius: 9999px;
 }
 
 .btn-primary::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #7ECBF5 0%, #5B6FDD 48%, #9B5FFF 100%);
+  background: linear-gradient(90deg, #7ECBF5 0%, #9B5FFF 100%);
   opacity: 0;
   transition: opacity 0.25s ease;
 }
@@ -242,7 +243,7 @@ button {
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(99, 179, 237, 0.35), 0 4px 16px rgba(123, 47, 247, 0.4);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.45);
 }
 
 .btn-primary:active {
@@ -386,4 +387,56 @@ button {
   100% {
     background-position: -200% 0;
   }
+}
+
+/* ============================================================
+   GLOBAL BUTTON & GRADIENT OVERRIDES (USER REQUEST)
+   ============================================================ */
+/* Ensure all main action buttons are fully rounded (pill) and use the blue->purple gradient */
+.btn-primary,
+.nav-btn-primary,
+.lsubmit,
+.google-button,
+.auth-btn {
+  border-radius: 9999px !important;
+  background: linear-gradient(90deg, #63B3ED 0%, #8B5CF6 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3) !important;
+  transition: all 0.2s ease, transform 0.2s ease !important;
+}
+
+.btn-primary:hover:not(:disabled),
+.nav-btn-primary:hover:not(:disabled),
+.lsubmit:hover:not(:disabled),
+.google-button:hover:not(:disabled),
+.auth-btn:hover:not(:disabled) {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.45) !important;
+  opacity: 0.95 !important;
+}
+
+/* Dark mode overrides that might conflict in local files */
+html.dark .lsubmit, 
+[data-theme="dark"] .lsubmit {
+  background: linear-gradient(90deg, #63B3ED 0%, #8B5CF6 100%) !important;
+  color: #ffffff !important;
+}
+
+/* Apply rounding to other common buttons to keep consistency */
+.btn-outline,
+.nav-btn-outline,
+.btn-ghost {
+  border-radius: 9999px !important;
+}
+
+/* Standardize all text gradients to the same blue->purple combination */
+.text-gradient,
+.lbrand-deep,
+.lbrand-vision,
+.nav-link--active .nav-link-label {
+  background: linear-gradient(90deg, #63B3ED 0%, #8B5CF6 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
 }

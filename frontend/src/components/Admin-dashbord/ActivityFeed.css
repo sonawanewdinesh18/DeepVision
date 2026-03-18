@@ -1,0 +1,87 @@
+/* ============================================================
+   ActivityFeed — DeepVision Admin
+   ============================================================ */
+.activity-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.activity-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.activity-header p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  transition: background var(--transition-base);
+}
+
+.activity-item:hover {
+  background: var(--bg-surface);
+}
+
+.activity-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  /* background color set inline with opacity */
+  opacity: 0.9;
+}
+
+.activity-icon svg {
+  color: #fff;
+}
+
+.activity-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.activity-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+}
+
+.activity-user {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.activity-time {
+  color: var(--text-muted);
+}
