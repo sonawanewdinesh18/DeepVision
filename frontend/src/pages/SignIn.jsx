@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
 import { AnimatedCharacters, GoogleButton } from '../components/auth';
+import { toast } from 'sonner';
 import logo from '../assets/LOGO.png';
 import './SignIn.css';
 
@@ -12,8 +13,7 @@ export default function SignIn() {
   const [isTyping, setIsTyping] = useState(false);
   const [focused, setFocused] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -26,18 +26,26 @@ export default function SignIn() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    if (!form.email || !form.password) { setError('Please fill in all fields.'); return; }
+    if (!form.email || !form.password) {
+      toast.error('Please fill in all required fields.');
+      return;
+    }
     try {
       setIsLoading(true);
       const { error } = await signIn(form.email, form.password);
       if (error) {
-        setError(error.message);
+        toast.error(error.message || 'Failed to sign in.');
       } else {
-        navigate('/user-dashboard'); // Note: The route guards will push to Admin if necessary
+        toast.success('Successfully signed in!');
+        // Redirect based on role
+        if (form.email === import.meta.env.VITE_ADMIN_EMAIL || isAdmin) {
+          navigate('/admin-dashboard');
+        } else {
+          navigate('/user-dashboard');
+        }
       }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+      toast.error('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -92,7 +100,6 @@ export default function SignIn() {
               <div className="lor"><span>OR</span></div>
 
               <form onSubmit={handleSubmit} noValidate className="lform">
-                {error && <div className="lerror">{error}</div>}
 
                 {/* Email */}
                 <div className="lfield-group">
