@@ -1,0 +1,95 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Sun, Moon, LogOut, Menu } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import logo from '../../assets/LOGO.png';
+import './Navbar.css';
+
+const Navbar = ({ toggleSidebar }) => {
+  const { isDark, toggle } = useTheme();
+  const { user, signOut } = useAuth();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const navigate = useNavigate();
+
+  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  const displayEmail = user?.email || 'user@example.com';
+  const initials = displayName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    setDropdownOpen(false);
+    await signOut();
+    navigate('/signin', { replace: true });
+  };
+
+  return (
+    <header className="user-navbar">
+      <div className="navbar-left">
+        <button className="menu-toggle" onClick={toggleSidebar} aria-label="Toggle sidebar">
+          <Menu size={20} />
+        </button>
+        <div className="logo-container" onClick={() => navigate('/')}>
+          <img src={logo} alt="DeepVision Logo" className="logo-image" />
+          <div className="logo-text">
+            <span style={{
+              background: 'linear-gradient(160deg, #63B3ED 0%, #2B6CB0 55%, #3B48CC 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}>Deep</span>
+            <span style={{
+              background: 'linear-gradient(160deg, #553ECC 0%, #7B2FF7 55%, #5B21B6 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}>Vision</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="navbar-right">
+        <button className="theme-toggle" onClick={toggle} aria-label="Toggle theme">
+          {isDark ? <Sun size={17} strokeWidth={2} /> : <Moon size={17} strokeWidth={2} />}
+        </button>
+
+        <div className="profile-container" ref={dropdownRef}>
+          <button
+            className="user-avatar"
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            aria-label="User profile"
+          >
+            {initials}
+          </button>
+
+          {dropdownOpen && (
+            <div className="profile-dropdown">
+              <div className="dropdown-header">
+                <p className="user-label">Logged in as</p>
+                <p className="user-name">{displayName}</p>
+                <p className="user-email">{displayEmail}</p>
+              </div>
+              <div className="dropdown-divider" />
+              <button className="dropdown-item danger" onClick={handleLogout}>
+                <LogOut size={16} />
+                <span>Log Out</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+};
+
+export default Navbar;

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'sonner';
 import logo from '../assets/LOGO.png';
 
 export default function ResetPassword() {
@@ -9,19 +10,15 @@ export default function ResetPassword() {
     const [showPassword, setShowPassword] = useState(false);
     const [focused, setFocused] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [message, setMessage] = useState('');
 
     const { updatePassword } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
-        setMessage('');
 
         if (password.length < 6) {
-            setError('Password must be at least 6 characters long.');
+            toast.error('Password must be at least 6 characters long.');
             return;
         }
 
@@ -29,13 +26,13 @@ export default function ResetPassword() {
             setIsLoading(true);
             const { error } = await updatePassword(password);
             if (error) {
-                setError(error.message);
+                toast.error(error.message || 'Failed to update password.');
             } else {
-                setMessage('Password successfully updated. Redirecting...');
+                toast.success('Password successfully updated. Redirecting...');
                 setTimeout(() => navigate('/signin'), 2000);
             }
         } catch (err) {
-            setError('An unexpected error occurred.');
+            toast.error('An unexpected error occurred.');
         } finally {
             setIsLoading(false);
         }
@@ -66,8 +63,6 @@ export default function ResetPassword() {
                             </div>
 
                             <form onSubmit={handleSubmit} noValidate className="lform">
-                                {error && <div className="lerror">{error}</div>}
-                                {message && <div className="lsuccess" style={{ padding: '10px 14px', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '10px', color: '#22c55e', fontSize: '0.84rem' }}>{message}</div>}
 
                                 <div className="lfield-group">
                                     <label className="lfield-label">NEW PASSWORD</label>

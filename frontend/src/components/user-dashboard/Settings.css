@@ -1,0 +1,101 @@
+/* ============================================================
+   Settings (User Dashboard) — DeepVision
+   ============================================================ */
+.settings-view {
+  display: flex;
+  flex-direction: column;
+}
+
+.grid-layout-2-1 {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .grid-layout-2-1 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.toggle-group {
+  padding: 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--transition-base);
+}
+
+.toggle-group:hover {
+  border-color: rgba(108, 63, 245, 0.4);
+}
+
+/* Custom Toggle Switch styling */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--text-muted);
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: var(--color-primary);
+  box-shadow: 0 0 10px rgba(108, 63, 245, 0.4);
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px var(--color-primary);
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+.bg-error-ghost {
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.hover-bg-error:hover {
+  background: var(--color-error) !important;
+}
+
+.hover-text-white:hover {
+  color: #fff !important;
+}

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { AnimatedCharacters, GoogleButton } from '../components/auth';
+import { toast } from 'sonner';
 import logo from '../assets/LOGO.png';
 import './SignUp.css';
 
@@ -12,7 +13,6 @@ export default function SignUp() {
   const [isTyping, setIsTyping] = useState(false);
   const [focused, setFocused] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const { signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
 
@@ -29,21 +29,27 @@ export default function SignUp() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    if (!form.fullName || !form.email || !form.password) { setError('Please fill in all fields.'); return; }
-    if (form.password.length < 6) { setError('Password must be at least 6 characters.'); return; }
+    if (!form.fullName || !form.email || !form.password) {
+      toast.error('Please fill in all required fields.');
+      return;
+    }
+    if (form.password.length < 6) {
+      toast.error('Password must be at least 6 characters.');
+      return;
+    }
     try {
       setIsLoading(true);
       const { error } = await signUp(form.email, form.password, form.fullName);
       if (error) {
-        setError(error.message);
+        toast.error(error.message || 'Failed to create account.');
       } else {
+        toast.success('Account created successfully!');
         // Option 1: auto-login works immediately, option 2 requires email confirmation.
         // Assuming no email confirmation is required based on settings config.
         navigate('/user-dashboard');
       }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+      toast.error('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +104,6 @@ export default function SignUp() {
               <div className="lor"><span>OR</span></div>
 
               <form onSubmit={handleSubmit} noValidate className="lform">
-                {error && <div className="lerror">{error}</div>}
 
                 {/* Full Name */}
                 <div className="lfield-group">
