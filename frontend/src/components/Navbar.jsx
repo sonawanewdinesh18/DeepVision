@@ -11,9 +11,9 @@ const NAV_LINKS = [
     { label: 'Home', href: '#home', Icon: Home },
     { label: 'Features', href: '#features', Icon: Sparkles },
     { label: 'How it Works', href: '#howitworks', Icon: Layers },
-    { label: 'About Us', href: '#about', Icon: Users },
     { label: 'Pricing', href: '#pricing', Icon: CreditCard },
     { label: 'Contact', href: '#contact', Icon: Mail },
+    { label: 'About Us', href: '#about', Icon: Users },
 ];
 
 export default function Navbar() {
@@ -36,6 +36,25 @@ export default function Navbar() {
         const onScroll = () => setScrolled(window.scrollY > 24);
         window.addEventListener('scroll', onScroll, { passive: true });
         return () => window.removeEventListener('scroll', onScroll);
+    }, []);
+
+    // Auto-highlight active section on scroll
+    useEffect(() => {
+        const sectionIds = NAV_LINKS.map(l => l.href.replace('#', ''));
+        const observers = [];
+
+        sectionIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const obs = new IntersectionObserver(
+                ([entry]) => { if (entry.isIntersecting) setActiveLink(`#${id}`); },
+                { rootMargin: '-40% 0px -55% 0px', threshold: 0 }
+            );
+            obs.observe(el);
+            observers.push(obs);
+        });
+
+        return () => observers.forEach(o => o.disconnect());
     }, []);
 
     // Close dropdown when clicking outside
@@ -189,20 +208,20 @@ export default function Navbar() {
 
             {/* Scoped CSS using styled tags */}
             <style>{`
-        /* Center Pill Container */
+        /* Center nav links — flat horizontal row */
         .nav-pill-container {
           display: flex;
           align-items: center;
           gap: 2px;
           padding: 5px;
-          border-radius: 9999px; /* Ensures fully rounded sides pill */
-          background: var(--bg-surface); /* light gray / dark gray */
+          border-radius: 9999px;
+          background: var(--bg-surface);
           border: 1px solid var(--border-color);
           box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-          flex: 0 1 auto; /* Don't stretch too much */
+          flex: 0 1 auto;
         }
 
-        /* Each nav link inside pill */
+        /* Each nav link */
         .nav-link {
           display: inline-flex;
           align-items: center;
@@ -222,11 +241,10 @@ export default function Navbar() {
           color: var(--text-primary);
         }
 
-        /* Active styling inside Pill */
+        /* Active — pill highlight + gradient text + bottom dot */
         .nav-link--active {
-          position: relative;
           font-weight: 700;
-          background: var(--bg-card); /* Changes based on theme */
+          background: var(--bg-card);
           box-shadow: 0 2px 8px rgba(0,0,0,0.06);
           color: var(--text-primary);
         }

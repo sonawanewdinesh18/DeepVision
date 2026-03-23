@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
 import { AnimatedCharacters, GoogleButton } from '../components/auth';
@@ -15,6 +15,7 @@ export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, signInWithGoogle, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -37,8 +38,15 @@ export default function SignIn() {
         toast.error(error.message || 'Failed to sign in.');
       } else {
         toast.success('Successfully signed in!');
-        // Redirect based on role
-        if (form.email === import.meta.env.VITE_ADMIN_EMAIL || isAdmin) {
+        // Check for pending redirect (set by pricing page before navigating here)
+        const redirectTo = location.state?.redirectTo;
+        const pending = sessionStorage.getItem('pendingRedirect');
+        if (redirectTo) {
+          navigate(redirectTo);
+        } else if (pending) {
+          sessionStorage.removeItem('pendingRedirect');
+          navigate(pending);
+        } else if (form.email === import.meta.env.VITE_ADMIN_EMAIL || isAdmin) {
           navigate('/admin-dashboard');
         } else {
           navigate('/user-dashboard');
