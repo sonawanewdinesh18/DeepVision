@@ -12,27 +12,11 @@ const TopHeader = ({ setActiveView }) => {
   return (
     <header className="top-header">
       <div className="header-left">
-        <div className="logo-container">
-          <img src={logo} alt="DeepVision Logo" className="logo-image" />
-          <div className="logo-text">
-            <span style={{
-              background: 'linear-gradient(90deg, #63B3ED 0%, #8B5CF6 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}>Deep</span>
-            <span style={{
-              background: 'linear-gradient(90deg, #63B3ED 0%, #8B5CF6 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}>Vision</span>
-          </div>
-        </div>
-        <div className="header-badge">Admin Panel</div>
+        {/* Logo and Badge moved to Sidebar for correct left positioning */}
       </div>
 
       <div className="header-right">
+        <div className="header-badge">Admin</div>
         <button className="theme-toggle" onClick={toggle} aria-label="Toggle theme">
           {isDark ? <Sun size={17} strokeWidth={2} /> : <Moon size={17} strokeWidth={2} />}
         </button>

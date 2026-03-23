@@ -65,6 +65,11 @@ const DetectionChart = () => {
           </span>
           <span className="summary-label">Detection Rate</span>
         </div>
+        <div className="summary-divider" />
+        <div className="summary-item">
+          <span className="summary-value">96.2%</span>
+          <span className="summary-label">Avg. Accuracy</span>
+        </div>
       </div>
     </div>
   );
