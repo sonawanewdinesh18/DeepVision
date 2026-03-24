@@ -27,7 +27,7 @@ const ProfileSettings = () => {
   return (
     <div className="profile-settings">
       <div className="settings-header">
-        <h1>Account Settings</h1>
+        <h1>ACCOUNT SETTINGS</h1>
       </div>
 
       <div className="settings-layout">
