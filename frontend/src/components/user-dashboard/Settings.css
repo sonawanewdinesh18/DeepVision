@@ -99,3 +99,13 @@ input:checked + .slider:before {
 .hover-text-white:hover {
   color: #fff !important;
 }
+
+/* Page heading — logo gradient */
+.settings-view .page-title h1 {
+  background: linear-gradient(90deg, #4F8EF7 0%, #7B5CF6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 28px;
+  font-weight: 800;
+}
