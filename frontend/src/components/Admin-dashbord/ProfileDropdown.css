@@ -101,7 +101,7 @@
   padding: 10px 12px;
   background: transparent;
   border: none;
-  border-radius: var(--radius-lg);
+  border-radius: 999px;
   color: var(--text-secondary);
   font-size: 0.875rem;
   font-weight: 500;

@@ -118,7 +118,6 @@ export default function Feedback() {
     <div className="fb-root">
       <div className="fb-page-title">
         <h1>FEEDBACK MANAGEMENT</h1>
-        <p>Review and respond to user feedback</p>
       </div>
 
       <div className="fb-stats">

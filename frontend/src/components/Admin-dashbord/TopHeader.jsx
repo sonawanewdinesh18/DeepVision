@@ -17,9 +17,6 @@ const TopHeader = ({ setActiveView }) => {
 
       <div className="header-right">
         <div className="header-badge">Admin</div>
-        <button className="theme-toggle" onClick={toggle} aria-label="Toggle theme">
-          {isDark ? <Sun size={17} strokeWidth={2} /> : <Moon size={17} strokeWidth={2} />}
-        </button>
 
         <div className="profile-container">
           <div
@@ -39,6 +36,14 @@ const TopHeader = ({ setActiveView }) => {
             />
           )}
         </div>
+
+        <button
+          className="theme-toggle"
+          onClick={toggle}
+          aria-label="Toggle theme"
+        >
+          {isDark ? <Sun size={16} /> : <Moon size={16} />}
+        </button>
       </div>
     </header>
   );

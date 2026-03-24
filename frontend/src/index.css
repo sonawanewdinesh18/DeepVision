@@ -267,10 +267,32 @@ button {
   cursor: pointer;
   font-family: inherit;
   color: inherit;
+  border-radius: 999px;
 }
 
 input, textarea, select {
   color: var(--text-primary);
+}
+
+/* ============================================================
+   SELECT / OPTION — dark-mode-aware
+   ============================================================ */
+select {
+  background: var(--input-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--input-border);
+  font-family: inherit;
+}
+
+select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* Tell the browser to render native UI (scrollbar, dropdown) in dark mode */
+html.dark select,
+[data-theme="dark"] select {
+  color-scheme: dark;
 }
 
 /* Ensure proper text colors for common elements */

@@ -48,7 +48,7 @@
   gap: 8px;
   padding: 10px 18px;
   border: none;
-  border-radius: 8px;
+  border-radius: 999px;
   font-size: 0.875rem;
   font-weight: 600;
   font-family: inherit;
@@ -250,7 +250,7 @@
   gap: 4px;
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 999px;
   padding: 4px;
 }
 
@@ -259,7 +259,7 @@
   height: 32px;
   border: none;
   background: transparent;
-  border-radius: 6px;
+  border-radius: 999px;
   color: var(--text-muted);
   cursor: pointer;
   display: flex;
@@ -297,7 +297,7 @@
   padding: 6px 12px;
   background: transparent;
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: 999px;
   color: var(--text-secondary);
   font-size: 0.8rem;
   font-weight: 500;
@@ -426,7 +426,7 @@
 .card-action-btn {
   width: 32px;
   height: 32px;
-  border-radius: 6px;
+  border-radius: 999px;
   border: 1px solid var(--border-color);
   background: transparent;
   color: var(--text-muted);
@@ -564,7 +564,7 @@
 .table-action-btn {
   width: 32px;
   height: 32px;
-  border-radius: 6px;
+  border-radius: 999px;
   border: 1px solid var(--border-color);
   background: transparent;
   color: var(--text-muted);
@@ -754,7 +754,7 @@
 .close-btn {
   width: 32px;
   height: 32px;
-  border-radius: 6px;
+  border-radius: 999px;
   border: none;
   background: transparent;
   color: var(--text-muted);

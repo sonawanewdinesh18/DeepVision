@@ -50,7 +50,7 @@
   align-items: center;
   width: 100%;
   padding: 10px 14px;
-  border-radius: var(--radius-lg);
+  border-radius: 999px;
   border: none;
   background: transparent;
   color: var(--text-secondary);

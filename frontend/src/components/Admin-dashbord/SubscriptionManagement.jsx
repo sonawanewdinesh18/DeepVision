@@ -23,8 +23,8 @@ const SubscriptionManagement = () => {
     <div className="subscription-management">
       <div className="page-header">
         <div className="header-content">
-          <h1>SUBSCRIPTION MANAGEMENT</h1>
-          <p>Manage subscription plans and user subscriptions</p>
+          <h1>Plans &amp; Billing</h1>
+          <p>Manage subscription tiers, pricing, and user billing</p>
         </div>
       </div>
 
