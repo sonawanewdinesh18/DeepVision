@@ -15,7 +15,8 @@ const Dashboard = () => {
   return (
     <div className="dashboard">
       <div className="page-title">
-        <h1>DASHBOARD OVERVIEW</h1>
+        <h1>Command Center</h1>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '4px' }}>Real-time insights and platform performance at a glance</p>
       </div>
 
       <div className="stats-grid">
