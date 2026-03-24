@@ -10,6 +10,7 @@ const Navbar = ({ toggleSidebar }) => {
   const { isDark, toggle } = useTheme();
   const { user, signOut } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('home');
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
@@ -58,11 +59,25 @@ const Navbar = ({ toggleSidebar }) => {
         </div>
       </div>
 
-      <div className="navbar-right">
-        <button className="theme-toggle" onClick={toggle} aria-label="Toggle theme">
-          {isDark ? <Sun size={17} strokeWidth={2} /> : <Moon size={17} strokeWidth={2} />}
-        </button>
+      {/* Center — Home / Pricing pill toggle */}
+      <div className="navbar-center">
+        <div className="nav-pill-track">
+          <button
+            className={`nav-pill-btn ${activeTab === 'home' ? 'nav-pill-active' : ''}`}
+            onClick={() => { setActiveTab('home'); navigate('/'); }}
+          >
+            Home
+          </button>
+          <button
+            className={`nav-pill-btn ${activeTab === 'pricing' ? 'nav-pill-active' : ''}`}
+            onClick={() => { setActiveTab('pricing'); navigate('/pricing'); }}
+          >
+            Pricing
+          </button>
+        </div>
+      </div>
 
+      <div className="navbar-right">
         <div className="profile-container" ref={dropdownRef}>
           <button
             className="user-avatar"
@@ -87,6 +102,10 @@ const Navbar = ({ toggleSidebar }) => {
             </div>
           )}
         </div>
+
+        <button className="theme-toggle" onClick={toggle} aria-label="Toggle theme">
+          {isDark ? <Sun size={17} strokeWidth={2} /> : <Moon size={17} strokeWidth={2} />}
+        </button>
       </div>
     </header>
   );

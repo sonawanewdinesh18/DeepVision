@@ -161,38 +161,27 @@ html.dark,
   --bg-surface: #111118;
   --bg-card: #16161f;
   --bg-overlay: rgba(22, 22, 31, 0.8);
-  --bg-tertiary: #1e1e2e;
-  --bg-quaternary: #262640;
 
-  --border-color: rgba(255, 255, 255, 0.08);
-  --border-secondary: rgba(255, 255, 255, 0.12);
-  --border-card: rgba(255, 255, 255, 0.1);
+  --border-color: rgba(255, 255, 255, 0.07);
+  --border-card: rgba(255, 255, 255, 0.09);
 
   --text-primary: #f0f0fa;
-  --text-secondary: #a1a1b8;
-  --text-muted: #6b6b88;
-  --text-invert: #0f172a;
-  --text-disabled: #4b4b68;
+  --text-secondary: #9898b8;
+  --text-muted: #5c5c78;
+  --text-invert: #0f0f14;
 
   --input-bg: rgba(255, 255, 255, 0.05);
-  --input-border: rgba(255, 255, 255, 0.12);
-  --input-disabled: rgba(255, 255, 255, 0.03);
+  --input-border: rgba(255, 255, 255, 0.1);
 
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5), 0 4px 6px rgba(0, 0, 0, 0.3);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6), 0 10px 10px rgba(0, 0, 0, 0.3);
-  --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.8);
-  --shadow-button: 0 2px 4px rgba(0, 0, 0, 0.3);
-  --shadow-button-hover: 0 4px 12px rgba(0, 0, 0, 0.4);
-
-  --color-success-bg: rgba(16, 185, 129, 0.1);
-  --color-warning-bg: rgba(245, 158, 11, 0.1);
-  --color-error-bg: rgba(239, 68, 68, 0.1);
-  --color-info-bg: rgba(59, 130, 246, 0.1);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.6);
 
   --scrollbar-thumb: rgba(255, 255, 255, 0.12);
+
+  --color-primary:       #8b5cf6;
+  --color-primary-light: #a78bfa;
+  --color-primary-glow:  rgba(139, 92, 246, 0.25);
 }
 
 /* ============================================================
@@ -385,7 +374,7 @@ html.dark select,
 /* Logo gradient: cyan → indigo → purple */
 
 .btn-primary {
-  background: linear-gradient(90deg, #63B3ED 0%, #8B5CF6 100%);
+  background: linear-gradient(135deg, #60a5fa 0%, #8b5cf6 100%);
   color: #fff;
   box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);
   position: relative;
@@ -397,9 +386,9 @@ html.dark select,
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, #7ECBF5 0%, #9B5FFF 100%);
+  background: linear-gradient(135deg, #7ab8fb 0%, #a78bfa 100%);
   opacity: 0;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.3s ease;
 }
 
 .btn-primary:hover::before {
@@ -407,7 +396,7 @@ html.dark select,
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.02);
   box-shadow: 0 6px 20px rgba(139, 92, 246, 0.45);
 }
 
@@ -564,11 +553,11 @@ html.dark select,
 .google-button,
 .auth-btn {
   border-radius: 9999px !important;
-  background: linear-gradient(90deg, #63B3ED 0%, #8B5CF6 100%) !important;
+  background: linear-gradient(135deg, #60a5fa 0%, #8b5cf6 100%) !important;
   color: #ffffff !important;
   border: none !important;
   box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3) !important;
-  transition: all 0.2s ease, transform 0.2s ease !important;
+  transition: all 0.3s ease !important;
 }
 
 .btn-primary:hover:not(:disabled),
@@ -576,8 +565,8 @@ html.dark select,
 .lsubmit:hover:not(:disabled),
 .google-button:hover:not(:disabled),
 .auth-btn:hover:not(:disabled) {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.45) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5) !important;
   opacity: 0.95 !important;
 }
 
