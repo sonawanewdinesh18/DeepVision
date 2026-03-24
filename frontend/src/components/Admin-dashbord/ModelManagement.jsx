@@ -112,7 +112,7 @@ const ModelManagement = () => {
   return (
     <div className="model-management">
       <div className="page-title">
-        <h1>Model Management</h1>
+        <h1>MODEL MANAGEMENT</h1>
       </div>
 
       {/* Statistics Cards */}
@@ -124,7 +124,7 @@ const ModelManagement = () => {
           <div className="stat-value">{totalModels}</div>
           <div className="stat-description">All AI models in system</div>
         </div>
-        
+
         <div className="stat-card">
           <div className="stat-header">
             <span className="stat-label">Active Models</span>
@@ -132,7 +132,7 @@ const ModelManagement = () => {
           <div className="stat-value">{activeModels}</div>
           <div className="stat-description">Currently deployed models</div>
         </div>
-        
+
         <div className="stat-card">
           <div className="stat-header">
             <span className="stat-label">Average Accuracy</span>

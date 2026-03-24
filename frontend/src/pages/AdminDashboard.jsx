@@ -3,7 +3,6 @@ import Sidebar from '../components/Admin-dashbord/Sidebar';
 import TopHeader from '../components/Admin-dashbord/TopHeader';
 import Dashboard from '../components/Admin-dashbord/Dashboard';
 import UserManagement from '../components/Admin-dashbord/UserManagement';
-import DatasetManagement from '../components/Admin-dashbord/DatasetManagement';
 import ModelManagement from '../components/Admin-dashbord/ModelManagement';
 import SubscriptionManagement from '../components/Admin-dashbord/SubscriptionManagement';
 import Feedback from '../components/Admin-dashbord/Feedback';
@@ -13,7 +12,6 @@ import ProfileSettings from '../components/Admin-dashbord/ProfileSettings';
 const VIEW_MAP = {
   dashboard: Dashboard,
   users: UserManagement,
-  datasets: DatasetManagement,
   models: ModelManagement,
   subscriptions: SubscriptionManagement,
   feedback: Feedback,
