@@ -71,6 +71,7 @@ const SubscriptionManagement = () => {
 // Plans Management Component
 const PlansManagement = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingPlan, setEditingPlan] = useState(null);
   const [plans, setPlans] = useState([
     {
       id: 1,
@@ -122,6 +123,21 @@ const PlansManagement = () => {
     };
     setPlans([...plans, newPlan]);
     setShowCreateModal(false);
+  };
+
+  const handleEditPlan = (plan) => {
+    setEditingPlan(plan);
+  };
+
+  const handleUpdatePlan = (updatedData) => {
+    setPlans(plans.map(p => p.id === editingPlan.id ? { ...editingPlan, ...updatedData } : p));
+    setEditingPlan(null);
+  };
+
+  const handleDeletePlan = (planId) => {
+    if (window.confirm('Are you sure you want to delete this plan? This action cannot be undone.')) {
+      setPlans(plans.filter(p => p.id !== planId));
+    }
   };
 
   return (
@@ -213,6 +229,26 @@ const PlansManagement = () => {
                 {plan.detections !== -1 ? ` detections per ${plan.period}` : ' detections'}
               </p>
             </div>
+
+            <div className="plan-actions">
+              <button className="plan-edit-btn" onClick={() => handleEditPlan(plan)}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                Edit
+              </button>
+              <button className="plan-delete-btn" onClick={() => handleDeletePlan(plan.id)}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  <path d="M10 11v6"/>
+                  <path d="M14 11v6"/>
+                  <path d="M9 6V4h6v2"/>
+                </svg>
+                Delete
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -222,6 +258,15 @@ const PlansManagement = () => {
         <CreatePlanModal 
           onClose={() => setShowCreateModal(false)}
           onSave={handleCreatePlan}
+        />
+      )}
+
+      {/* Edit Plan Modal */}
+      {editingPlan && (
+        <EditPlanModal
+          plan={editingPlan}
+          onClose={() => setEditingPlan(null)}
+          onSave={handleUpdatePlan}
         />
       )}
     </div>
@@ -351,6 +396,131 @@ const CreatePlanModal = ({ onClose, onSave }) => {
             </button>
             <button type="submit" className="save-btn">
               Create Plan
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Edit Plan Modal Component
+const EditPlanModal = ({ plan, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    name: plan.name,
+    price: plan.price,
+    period: plan.period,
+    features: plan.features.join('\n'),
+    detections: plan.detections
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.name.trim()) {
+      alert('Please enter a plan name');
+      return;
+    }
+    const featuresArray = formData.features
+      .split('\n')
+      .map(f => f.trim())
+      .filter(f => f.length > 0);
+    if (featuresArray.length === 0) {
+      alert('Please add at least one feature');
+      return;
+    }
+    onSave({
+      name: formData.name.trim(),
+      price: parseInt(formData.price),
+      period: formData.period,
+      features: featuresArray,
+      detections: parseInt(formData.detections)
+    });
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>Edit Plan — {plan.name}</h3>
+          <button className="close-btn" onClick={onClose}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="modal-body">
+          <div className="form-group">
+            <label>Plan Name *</label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              placeholder="e.g., Premium, Business, Starter"
+              required
+            />
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Price (₹) *</label>
+              <input
+                type="number"
+                value={formData.price}
+                onChange={(e) => setFormData({...formData, price: e.target.value})}
+                placeholder="0"
+                min="0"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Billing Period *</label>
+              <select
+                value={formData.period}
+                onChange={(e) => setFormData({...formData, period: e.target.value})}
+                required
+              >
+                <option value="day">Per Day</option>
+                <option value="month">Per Month</option>
+                <option value="year">Per Year</option>
+                <option value="forever">Forever (Free)</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Detection Limit *</label>
+            <input
+              type="number"
+              value={formData.detections}
+              onChange={(e) => setFormData({...formData, detections: e.target.value})}
+              placeholder="Enter -1 for unlimited"
+              required
+            />
+            <span className="form-hint">Use -1 for unlimited detections</span>
+          </div>
+
+          <div className="form-group">
+            <label>Features (one per line) *</label>
+            <textarea
+              value={formData.features}
+              onChange={(e) => setFormData({...formData, features: e.target.value})}
+              placeholder="Enter features, one per line"
+              rows="6"
+              required
+            />
+            <span className="form-hint">Add each feature on a new line</span>
+          </div>
+
+          <div className="modal-footer">
+            <button type="button" className="cancel-btn" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" className="save-btn">
+              Save Changes
             </button>
           </div>
         </form>
