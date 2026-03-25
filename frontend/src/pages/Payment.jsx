@@ -147,7 +147,15 @@ export default function Payment() {
         <div style={{ background:'#0f0f1e', border:'1px solid rgba(255,255,255,0.08)', borderRadius:28, overflow:'hidden', boxShadow:'0 60px 120px rgba(0,0,0,0.7)' }}>
           {/* top accent */}
           <div style={{ height:4, background:`linear-gradient(90deg,${pc},${pcLight},${pc})` }}/>
-          <div style={{ padding:'44px 40px 40px', textAlign:'center' }}>
+          <div style={{ padding:'32px 40px 8px', display:'flex', alignItems:'center', justifyContent:'center', gap:8, borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+            <img src="/src/assets/LOGO.png" alt="DeepVision" style={{ height:26, objectFit:'contain' }}/>
+            <span style={{ fontWeight:800, fontSize:'0.9rem', letterSpacing:'-0.01em' }}>
+              <span style={{ background:'linear-gradient(160deg,#63B3ED,#2B6CB0)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Deep</span>
+              <span style={{ background:'linear-gradient(160deg,#553ECC,#7B2FF7)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Vision</span>
+              <span style={{ color:pcLight }}> Pay</span>
+            </span>
+          </div>
+          <div style={{ padding:'36px 40px 40px', textAlign:'center' }}>
             <motion.div initial={{ scale:0, rotate:-20 }} animate={{ scale:1, rotate:0 }} transition={{ delay:0.2, type:'spring', stiffness:160, damping:12 }}
               style={{ width:80, height:80, borderRadius:'50%', background:`linear-gradient(135deg,#10b981,#059669)`, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 24px', boxShadow:'0 0 0 16px rgba(16,185,129,0.1), 0 16px 48px rgba(16,185,129,0.4)' }}>
               <CheckCircle size={40} color="#fff" strokeWidth={2}/>
@@ -228,10 +236,12 @@ export default function Payment() {
           <ArrowLeft size={16}/> Back
         </button>
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <div style={{ width:32, height:32, borderRadius:10, background:`linear-gradient(135deg,${pc},${pcLight})`, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:`0 4px 16px ${pc}50` }}>
-            <Shield size={16} color="#fff"/>
-          </div>
-          <span style={{ fontWeight:800, fontSize:'0.95rem', color:'#fff', letterSpacing:'-0.01em' }}>DeepVision <span style={{ color:pcLight }}>Pay</span></span>
+          <img src="/src/assets/LOGO.png" alt="DeepVision" style={{ height:30, objectFit:'contain' }}/>
+          <span style={{ fontWeight:800, fontSize:'0.95rem', color:'#fff', letterSpacing:'-0.01em' }}>
+            <span style={{ background:'linear-gradient(160deg,#63B3ED,#2B6CB0,#3B48CC)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Deep</span>
+            <span style={{ background:'linear-gradient(160deg,#553ECC,#7B2FF7,#5B21B6)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Vision</span>
+            <span style={{ color:pcLight }}> Pay</span>
+          </span>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:6 }}>
           <div style={{ width:7, height:7, borderRadius:'50%', background:'#10b981', boxShadow:'0 0 8px #10b981', animation:'pulse 2s infinite' }}/>
@@ -316,7 +326,7 @@ export default function Payment() {
               <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:6, background:'rgba(0,0,0,0.4)', borderRadius:16, padding:5, marginBottom:28, border:'1px solid rgba(255,255,255,0.06)' }}>
                 {[['upi','UPI / QR'],['card','Card'],['wallet','Wallet']].map(([t,lb])=>(
                   <button key={t} onClick={()=>setTab(t)}
-                    style={{ padding:'11px', borderRadius:12, border:'none', cursor:'pointer', fontSize:'0.82rem', fontWeight:700, transition:'all 0.22s',
+                    style={{ padding:'11px', borderRadius:999, border:'none', cursor:'pointer', fontSize:'0.82rem', fontWeight:700, transition:'all 0.22s',
                       background: tab===t ? `linear-gradient(135deg,${pc},${pcLight})` : 'transparent',
                       color: tab===t ? '#fff' : 'rgba(255,255,255,0.35)',
                       boxShadow: tab===t ? `0 4px 20px ${pc}50` : 'none',
@@ -335,7 +345,7 @@ export default function Payment() {
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:24 }}>
                       {UPI_APPS.map(({ name, color, Logo }) => (
                         <button key={name} onClick={()=>{ setSelectedApp(name); setUpiVerified(null); setUpiId(''); }}
-                          style={{ padding:'16px 6px 12px', borderRadius:16, border: selectedApp===name ? `2px solid ${color}` : '1.5px solid rgba(255,255,255,0.08)', background: selectedApp===name ? `${color}15` : 'rgba(255,255,255,0.03)', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:8, transition:'all 0.22s',
+                          style={{ padding:'16px 6px 12px', borderRadius:20, border: selectedApp===name ? `2px solid ${color}` : '1.5px solid rgba(255,255,255,0.08)', background: selectedApp===name ? `${color}15` : 'rgba(255,255,255,0.03)', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:8, transition:'all 0.22s',
                             boxShadow: selectedApp===name ? `0 6px 24px ${color}35` : 'none',
                             transform: selectedApp===name ? 'translateY(-3px)' : 'none' }}>
                           <Logo size={34}/>

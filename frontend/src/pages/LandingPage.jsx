@@ -1,10 +1,33 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Zap, Shield, Brain, BarChart3, Upload, Play, Lock, CheckCircle, Mail, Phone, MapPin, Clock, Send, Instagram, Facebook, Twitter, Linkedin, Youtube } from 'lucide-react';
+import { ArrowRight, Zap, Shield, Brain, BarChart3, Upload, Play, Lock, CheckCircle, Mail, Phone, MapPin, Clock, Send, Github, Linkedin } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import demoVideo from '../assets/DeepFake.mp4';
+import logoImg from '../assets/LOGO.png';
+
+/* ─── Count-up hook ─────────────────────────────────────────── */
+function useCountUp(target, duration = 1800, delay = 2700) {
+    const [count, setCount] = useState(0);
+    useEffect(() => {
+        let timeout;
+        timeout = setTimeout(() => {
+            const start = performance.now();
+            const tick = (now) => {
+                const elapsed = now - start;
+                const progress = Math.min(elapsed / duration, 1);
+                // ease-out cubic
+                const eased = 1 - Math.pow(1 - progress, 3);
+                setCount(Math.round(eased * target));
+                if (progress < 1) requestAnimationFrame(tick);
+            };
+            requestAnimationFrame(tick);
+        }, delay);
+        return () => clearTimeout(timeout);
+    }, [target, duration, delay]);
+    return count;
+}
 
 /* ─── Letter drop animation component ──────────────────────── */
 function DropText({ words, color, gradient, delay = 0 }) {
@@ -169,14 +192,33 @@ export default function LandingPage() {
     const heroOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
     const [showVideo, setShowVideo] = useState(false);
     const videoRef = useRef(null);
+    const accuracyCount  = useCountUp(95,    1800, 2700);
+    const usersCount     = useCountUp(10000, 1800, 2800);
+    const mediaCount     = useCountUp(1000000, 1800, 2900);
+    const timeCount      = useCountUp(100, 1200, 3000);
 
     useEffect(() => {
         if (showVideo && videoRef.current) videoRef.current.play();
     }, [showVideo]);
 
+    // Scroll to hash section when navigated from another page (e.g. /#features)
+    useEffect(() => {
+        const hash = window.location.hash;
+        if (hash) {
+            setTimeout(() => {
+                const el = document.getElementById(hash.replace('#', ''));
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+    }, []);
+
+    const formatUsers = (n) => n >= 10000 ? '10K+' : n >= 1000 ? `${(n/1000).toFixed(0)}K+` : `${n}+`;
+    const formatMedia = (n) => n >= 1000000 ? '1M+' : n >= 1000 ? `${(n/1000).toFixed(0)}K+` : `${n}+`;
+    const formatTime  = (n) => n >= 100 ? '<1s' : `${(n / 100).toFixed(1)}s`;
+
     const STAT_BOXES = [
         {
-            value: '95%', label: 'Detection Accuracy',
+            value: `${accuracyCount}%`, label: 'Detection Accuracy',
             icon: (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                     <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8"/>
@@ -186,7 +228,7 @@ export default function LandingPage() {
             ),
         },
         {
-            value: '10K+', label: 'Active Users',
+            value: formatUsers(usersCount), label: 'Active Users',
             icon: (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                     <circle cx="9" cy="7" r="3" stroke="currentColor" strokeWidth="1.8"/>
@@ -197,7 +239,7 @@ export default function LandingPage() {
             ),
         },
         {
-            value: '1M+', label: 'Media Analyzed',
+            value: formatMedia(mediaCount), label: 'Media Analyzed',
             icon: (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                     <rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" strokeWidth="1.8"/>
@@ -207,7 +249,7 @@ export default function LandingPage() {
             ),
         },
         {
-            value: '<1s', label: 'Processing Time',
+            value: formatTime(timeCount), label: 'Processing Time',
             icon: (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                     <circle cx="12" cy="13" r="8" stroke="currentColor" strokeWidth="1.8"/>
@@ -254,21 +296,22 @@ export default function LandingPage() {
                         {/* Badge */}
                         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
                             style={{ marginBottom: 24 }}>
-                            <span className="badge badge-primary" style={{ display: 'inline-flex' }}>
-                                🛡️ AI-Powered Deepfake Detection
+                            <span className="badge badge-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                                <img src={logoImg} alt="logo" style={{ width: 18, height: 18, objectFit: 'contain', borderRadius: 4 }} />
+                                AI-Powered Deepfake Detection
                             </span>
                         </motion.div>
 
                         {/* Letter-drop title */}
                         <h1 style={{ fontWeight: 900, lineHeight: 1.12, letterSpacing: '-0.03em', margin: '0 0 20px' }}>
-                            <div style={{ fontSize: 'clamp(2.2rem,3.2vw,3.4rem)', whiteSpace: 'nowrap' }}>
-                                <DropText words={['Deepfake', 'Detection']} delay={0.1} color="var(--text-primary)" />
+                            <div style={{ fontSize: 'clamp(1.9rem,2.8vw,3rem)', whiteSpace: 'nowrap' }}>
+                                <DropText words={['Deep', 'Learning-Based']} delay={0.1} color="var(--text-primary)" />
                             </div>
-                            <div style={{ fontSize: 'clamp(2.2rem,3.2vw,3.4rem)', whiteSpace: 'nowrap' }}>
-                                <DropText words={['System', 'Using']} delay={0.5} color="var(--text-primary)" />
+                            <div style={{ fontSize: 'clamp(1.9rem,2.8vw,3rem)', whiteSpace: 'nowrap' }}>
+                                <DropText words={['Deepfake', 'Detection']} delay={0.5} color="var(--text-primary)" />
                             </div>
-                            <div style={{ fontSize: 'clamp(2.2rem,3.2vw,3.4rem)', whiteSpace: 'nowrap' }}>
-                                <DropText words={['Images', '&', 'Videos']} delay={0.95} gradient="linear-gradient(135deg,#63B3ED,#8B5CF6)" />
+                            <div style={{ fontSize: 'clamp(1.9rem,2.8vw,3rem)', whiteSpace: 'nowrap' }}>
+                                <DropText words={['in', 'Visual', 'Media']} delay={0.95} gradient="linear-gradient(135deg,#63B3ED,#8B5CF6)" />
                             </div>
                         </h1>
 
@@ -870,7 +913,7 @@ export default function LandingPage() {
                                             navigate('/signin', { state: { redirectTo: '/pricing' } });
                                         }}
                                             style={{
-                                                width:'100%', padding:'15px 20px', borderRadius:14, border:'none',
+                                                width:'100%', padding:'15px 20px', borderRadius:999, border:'none',
                                                 fontWeight:800, fontSize:'0.93rem', cursor:'pointer',
                                                 display:'flex', alignItems:'center', justifyContent:'center', gap:8,
                                                 transition:'all 0.22s',
@@ -984,14 +1027,12 @@ export default function LandingPage() {
                                 </div>
                                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
                                     {[
-                                        { icon:<Instagram size={14}/>, label:'Instagram', color:'#E1306C', href:'https://instagram.com' },
-                                        { icon:<Facebook size={14}/>,  label:'Facebook',  color:'#1877F2', href:'https://facebook.com' },
-                                        { icon:<Youtube size={14}/>,   label:'YouTube',   color:'#FF0000', href:'https://youtube.com' },
-                                        { icon:<Linkedin size={14}/>,  label:'LinkedIn',  color:'#0A66C2', href:'https://linkedin.com' },
+                                        { icon:<Linkedin size={14}/>, label:'LinkedIn', color:'#0A66C2', href:'https://linkedin.com' },
+                                        { icon:<Github size={14}/>,   label:'GitHub',   color:'#ffffff', href:'https://github.com' },
                                     ].map(({ icon, label, color, href }) => (
                                         <button key={label}
                                             onClick={() => { if (!user) { sessionStorage.setItem('pendingRedirect','/'); navigate('/signin'); return; } window.open(href,'_blank','noopener,noreferrer'); }}
-                                            style={{ display:'flex', alignItems:'center', gap:8, padding:'9px 11px', borderRadius:11, border:'1px solid var(--border-color)', background:'var(--bg-surface)', cursor:'pointer', transition:'all 0.2s' }}
+                                            style={{ display:'flex', alignItems:'center', gap:8, padding:'9px 11px', borderRadius:999, border:'1px solid var(--border-color)', background:'var(--bg-surface)', cursor:'pointer', transition:'all 0.2s' }}
                                             onMouseEnter={e=>{ e.currentTarget.style.borderColor=color; e.currentTarget.style.background=`${color}12`; e.currentTarget.style.transform='translateY(-2px)'; }}
                                             onMouseLeave={e=>{ e.currentTarget.style.borderColor='var(--border-color)'; e.currentTarget.style.background='var(--bg-surface)'; e.currentTarget.style.transform='none'; }}>
                                             <div style={{ width:26, height:26, borderRadius:7, background:`${color}18`, display:'flex', alignItems:'center', justifyContent:'center', color, flexShrink:0 }}>{icon}</div>
@@ -1076,7 +1117,7 @@ export default function LandingPage() {
                                             )}
                                             <motion.button type="submit" disabled={contactLoading}
                                                 whileHover={{ scale:1.015, y:-1 }} whileTap={{ scale:0.985 }}
-                                                style={{ padding:'14px 36px', borderRadius:13, border:'none', background:'linear-gradient(135deg,#6C3FF5,#8B5CF6)', color:'#fff', fontWeight:800, fontSize:'0.95rem', cursor:'pointer', display:'flex', alignItems:'center', gap:9, boxShadow:'0 10px 28px rgba(108,63,245,0.38)', whiteSpace:'nowrap', marginLeft:'auto' }}>
+                                                style={{ padding:'14px 36px', borderRadius:999, border:'none', background:'linear-gradient(135deg,#6C3FF5,#8B5CF6)', color:'#fff', fontWeight:800, fontSize:'0.95rem', cursor:'pointer', display:'flex', alignItems:'center', gap:9, boxShadow:'0 10px 28px rgba(108,63,245,0.38)', whiteSpace:'nowrap', marginLeft:'auto' }}>
                                                 {contactLoading
                                                     ? <><span style={{ width:15, height:15, border:'2px solid rgba(255,255,255,0.3)', borderTopColor:'#fff', borderRadius:'50%', display:'inline-block', animation:'spin 0.7s linear infinite' }}/> Sending…</>
                                                     : <><Send size={15}/> {user ? 'Send Message' : 'Sign In & Send'}</>
@@ -1125,25 +1166,6 @@ export default function LandingPage() {
                             </motion.div>
                         ))}
                     </div>
-
-                    {/* stats */}
-                    <motion.div {...fadeUp(0.15)} style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:56 }}>
-                        {[
-                            { value:'2024', label:'Founded', color:'#63B3ED' },
-                            { value:'4+', label:'Team Members', color:'#8B5CF6' },
-                            { value:'150+', label:'Enterprise Clients', color:'#10b981' },
-                            { value:'99.99%', label:'Uptime SLA', color:'#F59E0B' },
-                        ].map(({ value, label, color }) => (
-                            <motion.div key={label}
-                                initial={{ opacity:0, y:30 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
-                                transition={{ duration:0.5 }}
-                                style={{ background:'var(--bg-card)', border:'1px solid var(--border-card)', borderRadius:20, padding:'28px 20px', textAlign:'center', position:'relative', overflow:'hidden' }}>
-                                <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:`linear-gradient(90deg,transparent,${color},transparent)` }}/>
-                                <div style={{ fontSize:'2rem', fontWeight:900, letterSpacing:'-0.04em', background:`linear-gradient(135deg,${color},${color}aa)`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', marginBottom:6 }}>{value}</div>
-                                <div style={{ fontSize:'0.75rem', color:'var(--text-muted)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em' }}>{label}</div>
-                            </motion.div>
-                        ))}
-                    </motion.div>
 
                     {/* team */}
                     <motion.div {...fadeUp(0.2)}>
@@ -1196,15 +1218,12 @@ export default function LandingPage() {
                         </p>
                         <div style={{ display:'flex', gap:8, marginBottom:28 }}>
                             {[
-                                { Icon:Instagram, color:'#E1306C', href:'https://instagram.com' },
-                                { Icon:Facebook,  color:'#1877F2', href:'https://facebook.com'  },
-                                { Icon:Twitter,   color:'#1DA1F2', href:'https://twitter.com'   },
-                                { Icon:Linkedin,  color:'#0A66C2', href:'https://linkedin.com'  },
-                                { Icon:Youtube,   color:'#FF0000', href:'https://youtube.com'   },
+                                { Icon:Linkedin, color:'#0A66C2', href:'https://linkedin.com' },
+                                { Icon:Github,   color:'#ffffff', href:'https://github.com'   },
                             ].map(({ Icon, color, href }) => (
                                 <button key={color}
                                     onClick={() => { if (!user) { sessionStorage.setItem('pendingRedirect','/'); navigate('/signin'); return; } window.open(href,'_blank','noopener,noreferrer'); }}
-                                    style={{ width:38, height:38, borderRadius:11, border:'1px solid var(--border-color)', background:'var(--bg-card)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.2s', color:'var(--text-muted)' }}
+                                    style={{ width:38, height:38, borderRadius:999, border:'1px solid var(--border-color)', background:'var(--bg-card)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.2s', color:'var(--text-muted)' }}
                                     onMouseEnter={e=>{ e.currentTarget.style.borderColor=color; e.currentTarget.style.color=color; e.currentTarget.style.background=`${color}15`; e.currentTarget.style.transform='translateY(-2px)'; }}
                                     onMouseLeave={e=>{ e.currentTarget.style.borderColor='var(--border-color)'; e.currentTarget.style.color='var(--text-muted)'; e.currentTarget.style.background='var(--bg-card)'; e.currentTarget.style.transform='translateY(0)'; }}>
                                     <Icon size={15}/>
