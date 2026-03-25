@@ -72,7 +72,7 @@ const Notifications = () => {
     <div className="notifications">
       <div className="notifications-header">
         <div className="header-content">
-          <h1>Notifications</h1>
+          <h1>NOTIFICATIONS</h1>
           {unreadCount > 0 && (
             <span className="unread-badge">{unreadCount} unread</span>
           )}

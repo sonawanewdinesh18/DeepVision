@@ -1,13 +1,18 @@
 import os
 from fastapi import FastAPI, Depends
+import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 from app.core.dependencies import get_current_user
+from app.core.exceptions import setup_exception_handlers
 
 load_dotenv()
 
 app = FastAPI()
+
+# Setup professional error handling globally
+setup_exception_handlers(app)
 
 # SECURITY: Allow your frontend to talk to your backend
 app.add_middleware(
@@ -34,3 +39,6 @@ def protected_route(current_user=Depends(get_current_user)):
         "email": current_user.email,
         "role": current_user.role
     }
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
