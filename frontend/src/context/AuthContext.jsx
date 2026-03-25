@@ -53,10 +53,15 @@ export const AuthProvider = ({ children }) => {
     };
 
     const signInWithGoogle = async () => {
+        // Store pending redirect before OAuth redirects away
+        const pending = sessionStorage.getItem('pendingRedirect');
+        const redirectUrl = pending
+            ? `${window.location.origin}/pricing`
+            : `${window.location.origin}/user-dashboard`;
         return await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: `${window.location.origin}/user-dashboard`,
+                redirectTo: redirectUrl,
                 queryParams: {
                     access_type: 'offline',
                     prompt: 'consent',

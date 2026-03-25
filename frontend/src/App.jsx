@@ -11,6 +11,8 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import Payment from './pages/Payment';
+import PricingPage from './pages/PricingPage';
 import './App.css';
 
 export default function App() {
@@ -32,6 +34,10 @@ export default function App() {
 
             {/* Reset Password must be accessible even if a session is just established via email link */}
             <Route path="/reset-password" element={<ResetPassword />} />
+
+            {/* Payment — public so unauthenticated users can reach it after sign-in redirect */}
+            <Route path="/payment" element={<Payment />} />
+            <Route path="/pricing" element={<PricingPage />} />
 
             {/* User authenticated routes */}
             <Route element={<ProtectedRoute />}>
