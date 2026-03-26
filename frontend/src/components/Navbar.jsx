@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -11,19 +11,24 @@ const NAV_LINKS = [
     { label: 'Home', href: '#home', Icon: Home },
     { label: 'Features', href: '#features', Icon: Sparkles },
     { label: 'How it Works', href: '#howitworks', Icon: Layers },
-    { label: 'About Us', href: '#about', Icon: Users },
     { label: 'Pricing', href: '#pricing', Icon: CreditCard },
     { label: 'Contact', href: '#contact', Icon: Mail },
+    { label: 'About Us', href: '#about', Icon: Users },
 ];
 
 export default function Navbar() {
     const { isDark, toggle } = useTheme();
     const { user, isAdmin, signOut } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+    const isHome = location.pathname === '/';
 
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
-    const [activeLink, setActiveLink] = useState('#home');
+    const [activeLink, setActiveLink] = useState(() => {
+        if (!isHome) return '';
+        return window.location.hash || '#home';
+    });
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
 
@@ -37,6 +42,26 @@ export default function Navbar() {
         window.addEventListener('scroll', onScroll, { passive: true });
         return () => window.removeEventListener('scroll', onScroll);
     }, []);
+
+    // Auto-highlight active section on scroll (home page only)
+    useEffect(() => {
+        if (!isHome) return;
+        const sectionIds = NAV_LINKS.map(l => l.href.replace('#', ''));
+        const observers = [];
+
+        sectionIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const obs = new IntersectionObserver(
+                ([entry]) => { if (entry.isIntersecting) setActiveLink(`#${id}`); },
+                { rootMargin: '-40% 0px -55% 0px', threshold: 0 }
+            );
+            obs.observe(el);
+            observers.push(obs);
+        });
+
+        return () => observers.forEach(o => o.disconnect());
+    }, [isHome]);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -91,13 +116,21 @@ export default function Navbar() {
                 {/* Center: Desktop nav links — pill container */}
                 <div className="nav-pill-container nav-links-desktop">
                     {NAV_LINKS.map(({ label, href, Icon }) => {
-                        const isActive = activeLink === href;
+                        const isActive = isHome
+                            ? activeLink === href
+                            : location.pathname === `/${href.replace('#', '')}`;
                         return (
                             <a
                                 key={label}
-                                href={href}
+                                href={isHome ? href : `/${href}`}
                                 className={`nav-link ${isActive ? 'nav-link--active' : ''}`}
-                                onClick={() => setActiveLink(href)}
+                                onClick={(e) => {
+                                    setActiveLink(href);
+                                    if (!isHome) {
+                                        e.preventDefault();
+                                        navigate(`/${href}`);
+                                    }
+                                }}
                             >
                                 <Icon size={14} strokeWidth={isActive ? 2.5 : 2} className="nav-link-icon" />
                                 <span className="nav-link-label">{label}</span>
@@ -168,7 +201,16 @@ export default function Navbar() {
                     backdropFilter: 'blur(24px)',
                 }}>
                     {NAV_LINKS.map(({ label, href, Icon }) => (
-                        <a key={label} href={href} className="nav-link-mobile" onClick={() => setMobileOpen(false)}>
+                        <a key={label}
+                            href={isHome ? href : `/${href}`}
+                            className="nav-link-mobile"
+                            onClick={(e) => {
+                                setMobileOpen(false);
+                                if (!isHome) {
+                                    e.preventDefault();
+                                    navigate(`/${href}`);
+                                }
+                            }}>
                             <Icon size={16} /> {label}
                         </a>
                     ))}
@@ -189,20 +231,20 @@ export default function Navbar() {
 
             {/* Scoped CSS using styled tags */}
             <style>{`
-        /* Center Pill Container */
+        /* Center nav links — flat horizontal row */
         .nav-pill-container {
           display: flex;
           align-items: center;
           gap: 2px;
           padding: 5px;
-          border-radius: 9999px; /* Ensures fully rounded sides pill */
-          background: var(--bg-surface); /* light gray / dark gray */
+          border-radius: 9999px;
+          background: var(--bg-surface);
           border: 1px solid var(--border-color);
           box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-          flex: 0 1 auto; /* Don't stretch too much */
+          flex: 0 1 auto;
         }
 
-        /* Each nav link inside pill */
+        /* Each nav link */
         .nav-link {
           display: inline-flex;
           align-items: center;
@@ -222,11 +264,10 @@ export default function Navbar() {
           color: var(--text-primary);
         }
 
-        /* Active styling inside Pill */
+        /* Active — pill highlight + gradient text + bottom dot */
         .nav-link--active {
-          position: relative;
           font-weight: 700;
-          background: var(--bg-card); /* Changes based on theme */
+          background: var(--bg-card);
           box-shadow: 0 2px 8px rgba(0,0,0,0.06);
           color: var(--text-primary);
         }

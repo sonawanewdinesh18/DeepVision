@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export function ProtectedRoute() {
@@ -17,9 +17,21 @@ export function AdminRoute() {
 
 export function PublicRoute() {
     const { user, isAdmin, loading } = useAuth();
+    const location = useLocation();
     if (loading) return <div>Loading...</div>;
     if (user) {
-        return <Navigate to={isAdmin ? "/admin-dashboard" : "/user-dashboard"} replace />;
+        // Check location state first (email sign-in path)
+        const redirectTo = location.state?.redirectTo;
+        if (redirectTo) {
+            return <Navigate to={redirectTo} replace />;
+        }
+        // Check sessionStorage (Google OAuth path — state is lost after redirect)
+        const pending = sessionStorage.getItem('pendingRedirect');
+        if (pending) {
+            sessionStorage.removeItem('pendingRedirect');
+            return <Navigate to={pending} replace />;
+        }
+        return <Navigate to={isAdmin ? '/admin-dashboard' : '/user-dashboard'} replace />;
     }
     return <Outlet />;
 }
