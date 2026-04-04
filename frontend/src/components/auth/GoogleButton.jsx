@@ -4,7 +4,8 @@
  */
 
 import { useState } from 'react';
-import { Spinner } from '../Loader';
+import { Spinner } from '@/components/common/Loader';
+
 
 // Google "G" SVG icon
 const GoogleIcon = () => (

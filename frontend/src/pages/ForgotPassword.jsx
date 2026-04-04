@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowRight } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { toast } from 'sonner';
-import logo from '../assets/LOGO.png';
+import { useAuth } from '@/context/AuthContext';
+import { AnimatedCharacters } from '@/components/auth';
+import toast from '@/utils/toast';
+import logo from '@/assets/LOGO.png';
 
 export default function ForgotPassword() {
     const [email, setEmail] = useState('');
@@ -22,12 +23,20 @@ export default function ForgotPassword() {
             setIsLoading(true);
             const { error } = await resetPasswordForEmail(email);
             if (error) {
-                toast.error(error.message || 'Failed to send reset link.');
+                if (error.message.includes('User not found')) {
+                    toast.error('No account found with this email address.');
+                } else {
+                    toast.error(error.message || 'Failed to send reset link.');
+                }
             } else {
-                toast.success('Password reset instructions have been sent to your email.');
+                toast.success('Password reset link sent! Check your email inbox.');
+                // Clear the email field after success
+                setTimeout(() => {
+                    setEmail('');
+                }, 2000);
             }
         } catch (err) {
-            toast.error('An unexpected error occurred.');
+            toast.error('An unexpected error occurred. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -48,6 +57,11 @@ export default function ForgotPassword() {
                             <span className="lbrand-deep">Deep</span><span className="lbrand-vision">Vision</span>
                         </span>
                     </Link>
+
+                    {/* Characters pushed toward bottom */}
+                    <div className="lcharacters">
+                        <AnimatedCharacters />
+                    </div>
                 </aside>
 
                 {/* ── Right scrollable panel ── */}
@@ -74,7 +88,7 @@ export default function ForgotPassword() {
                                             type="email"
                                             placeholder="you@example.com"
                                             value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
+                                            onChange={(e) => setEmail(e.target.value.toLowerCase().trim())}
                                             onFocus={() => setFocused('email')}
                                             onBlur={() => setFocused('')}
                                         />
@@ -114,6 +128,9 @@ const FORGOT_CSS = `
 .lbrand-name { font-size: 1.25rem; font-weight: 900; letter-spacing: -0.025em; white-space: nowrap; }
 .lbrand-deep { background: linear-gradient(150deg,#63B3ED 0%,#2B6CB0 55%,#3B48CC 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .lbrand-vision { background: linear-gradient(150deg,#553ECC 0%,#7B2FF7 55%,#5B21B6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+.lcharacters { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; align-items: flex-end; z-index: 1; }
+.lcharacters > div { transform: scale(1.08); transform-origin: bottom center; }
 
 .lform-bg { height: 100%; overflow-y: auto; background: #f2f2f7; }
 html.dark .lform-bg, [data-theme="dark"] .lform-bg { background: #0f0f18; }

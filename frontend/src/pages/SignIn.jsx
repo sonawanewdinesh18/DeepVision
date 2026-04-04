@@ -1,21 +1,40 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
-import { AnimatedCharacters, GoogleButton } from '../components/auth';
-import { toast } from 'sonner';
-import logo from '../assets/LOGO.png';
+import { AnimatedCharacters, GoogleButton } from '@/components/auth';
+import toast from '@/utils/toast';
+import logo from '@/assets/LOGO.png';
 import './SignIn.css';
 
 export default function SignIn() {
-  const [form, setForm] = useState({ email: '', password: '' });
+  const location = useLocation();
+  const [form, setForm] = useState({ 
+    email: location.state?.email || '', 
+    password: '' 
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [focused, setFocused] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { signIn, signInWithGoogle, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsGoogleLoading(true);
+      const { error } = await signInWithGoogle();
+      if (error) {
+        toast.error('Failed to sign in with Google. Please try again.');
+        setIsGoogleLoading(false);
+      }
+      // Note: On success, user will be redirected by OAuth flow
+    } catch (err) {
+      toast.error('An unexpected error occurred with Google sign-in.');
+      setIsGoogleLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,24 +52,43 @@ export default function SignIn() {
     }
     try {
       setIsLoading(true);
-      const { error } = await signIn(form.email, form.password);
+      const { data, error } = await signIn(form.email, form.password);
       if (error) {
-        toast.error(error.message || 'Failed to sign in.');
+        // Handle specific error messages
+        if (error.message.includes('Invalid login credentials')) {
+          toast.error('Invalid email or password. Please try again.');
+        } else if (error.message.includes('Email not confirmed')) {
+          toast.error('Please verify your email address before signing in.');
+        } else if (error.message.includes('User not found')) {
+          toast.error('No account found with this email. Please sign up first.');
+        } else {
+          toast.error(error.message || 'Failed to sign in.');
+        }
       } else {
-        toast.success('Successfully signed in!');
+        toast.success('Welcome back! Signing you in...');
+
+        // ── Determine role using the response directly (avoids React state race) ──
+        const signedInEmail = data?.user?.email || form.email;
+        const adminEmail    = import.meta.env.VITE_ADMIN_EMAIL || 'admin@deepvision.app';
+        const userIsAdmin   = signedInEmail.toLowerCase().trim() === adminEmail.toLowerCase().trim();
+
         // Check for pending redirect (set by pricing page before navigating here)
         const redirectTo = location.state?.redirectTo;
-        const pending = sessionStorage.getItem('pendingRedirect');
-        if (redirectTo) {
-          navigate(redirectTo);
-        } else if (pending) {
-          sessionStorage.removeItem('pendingRedirect');
-          navigate(pending);
-        } else if (form.email === import.meta.env.VITE_ADMIN_EMAIL || isAdmin) {
-          navigate('/admin-dashboard');
-        } else {
-          navigate('/user-dashboard');
-        }
+        const pending    = sessionStorage.getItem('pendingRedirect');
+
+        // Small delay for better UX
+        setTimeout(() => {
+          if (redirectTo) {
+            navigate(redirectTo);
+          } else if (pending) {
+            sessionStorage.removeItem('pendingRedirect');
+            navigate(pending);
+          } else if (userIsAdmin) {
+            navigate('/admin-dashboard');
+          } else {
+            navigate('/user-dashboard');
+          }
+        }, 800);
       }
     } catch (err) {
       toast.error('An unexpected error occurred. Please try again.');
@@ -102,7 +140,11 @@ export default function SignIn() {
 
               {/* Google first */}
               <div className="lgoogle-wrap">
-                <GoogleButton label="Continue with Google" onClick={signInWithGoogle} />
+                <GoogleButton 
+                  label="Continue with Google" 
+                  onClick={handleGoogleSignIn}
+                  isLoading={isGoogleLoading}
+                />
               </div>
 
               <div className="lor"><span>OR</span></div>

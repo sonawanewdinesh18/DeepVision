@@ -1,0 +1,45 @@
+# ── Python ──────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+dvvenv/
+env/
+ENV/
+
+# ── Environment ──────────────────────────────────────────────
+.env
+!.env.example
+
+# ── Editor ───────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+.DS_Store
+Thumbs.db
+
+# ── Logs ─────────────────────────────────────────────────────
+*.log
+*.txt.bak
+install_log.txt
+
+# ── AI Models (large binaries — use Git LFS or cloud storage) ─
+*.pth
+*.pt
+*.onnx
+*.h5
+*.pkl
+
+# ── Tests ────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/

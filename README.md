@@ -1,49 +1,282 @@
-# DeepVision
+# DeepVision - AI-Powered Deepfake Detection Platform
 
-DeepVision is a full-stack AI application structured into independent modules.
+![DeepVision Logo](frontend/src/assets/LOGO.png)
 
-## 📂 Project Structure
+DeepVision is a comprehensive web application for detecting deepfakes in images and videos using advanced AI models. The platform provides both user and admin interfaces for managing detections, subscriptions, and analytics.
 
-- **`backend/`**: Python API service (e.g. FastAPI/Flask). Manages core business logic and database interactions.
-- **`frontend/`**: Node.js/Vite based web client. The user interface of the application.
-- **`ai_models/`**: (Placeholder) Will store machine learning models and inference scripts.
-- **`docker/`**: (Placeholder) Will contain Dockerfiles and `docker-compose.yml` for containerized deployment.
-- **`docs/`**: (Placeholder) Additional project documentation and diagrams.
+## 🚀 Features
 
-## 🚀 Getting Started
+### User Features
+- **Upload & Analyze**: Upload images or videos for deepfake detection
+- **Real-time Results**: Get instant detection results with confidence scores
+- **Detection History**: Track all your previous detections
+- **Dashboard Analytics**: View your detection statistics and trends
+- **Subscription Plans**: Choose from Free, Pro, or Enterprise plans
 
-### Prerequisites
-- Node.js (for frontend)
-- Python 3.8+ (for backend)
+### Admin Features
+- **Analytics Dashboard**: Comprehensive platform metrics and insights
+- **User Management**: Manage users, roles, and subscriptions
+- **Subscription Management**: Handle pricing plans and billing
+- **Model Management**: Configure and monitor AI detection models
+- **Feedback System**: Review and respond to user feedback
 
-### 1. Backend Setup
+## 🛠️ Tech Stack
+
+### Frontend
+- **React 18** with Vite
+- **React Router** for navigation
+- **Framer Motion** for animations
+- **Supabase** for authentication and database
+- **Lucide React** for icons
+- **Sonner** for toast notifications
+
+### Backend
+- **FastAPI** (Python)
+- **Supabase** for database and storage
+- **PyTorch** for AI model inference
+- **Pydantic** for data validation
+
+### Database
+- **PostgreSQL** (via Supabase)
+- Row Level Security (RLS) enabled
+- Automated triggers and functions
+
+## 📋 Prerequisites
+
+- Node.js 18+ and npm/yarn
+- Python 3.9+
+- Supabase account
+- Git
+
+## 🔧 Installation
+
+### 1. Clone the Repository
 
 ```bash
-cd backend
-# Activate your virtual environment
-# Windows
-.\dvvenv\Scripts\activate
-# Linux/macOS
-source dvvenv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the backend server
-# Assuming a standard setup (adjust if needed)
-python main.py
+git clone https://github.com/yourusername/deepvision.git
+cd deepvision
 ```
 
 ### 2. Frontend Setup
 
 ```bash
 cd frontend
-# Install dependencies
 npm install
 
-# Start the development server
-npm run dev
+# Copy environment file
+cp .env.example .env
+
+# Edit .env with your Supabase credentials
+# VITE_SUPABASE_URL=your_supabase_url
+# VITE_SUPABASE_ANON_KEY=your_anon_key
 ```
 
-## 🛡️ Environment Variables
-Check the respective `.env.example` files in the `backend/` and `frontend/` directories to see required configuration variables.
+### 3. Backend Setup
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+pip install -r requirements.txt
+
+# Copy environment file
+cp .env.example .env
+
+# Edit .env with your Supabase credentials
+```
+
+### 4. Database Setup
+
+1. Create a Supabase project at [supabase.com](https://supabase.com)
+2. Run the SQL migrations in order:
+   ```bash
+   # In Supabase SQL Editor, run these files in order:
+   database/complete_setup.sql
+   database/migrations/001_enable_rls.sql
+   database/migrations/002_pricing_plans.sql
+   database/migrations/003_fix_profiles.sql
+   database/migrations/004_user_settings_notifications.sql
+   database/migrations/005_add_user_active_status.sql
+   database/triggers/auth_trigger.sql
+   ```
+
+3. (Optional) Seed admin user:
+   ```bash
+   database/seeds/admin_user.sql
+   ```
+
+## 🚀 Running the Application
+
+### Development Mode
+
+**Frontend:**
+```bash
+cd frontend
+npm run dev
+# Runs on http://localhost:5173
+```
+
+**Backend:**
+```bash
+cd backend
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+uvicorn main:app --reload
+# Runs on http://localhost:8000
+```
+
+### Production Build
+
+**Frontend:**
+```bash
+cd frontend
+npm run build
+npm run preview
+```
+
+**Backend:**
+```bash
+cd backend
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+## 📁 Project Structure
+
+```
+deepvision/
+├── frontend/                 # React frontend
+│   ├── src/
+│   │   ├── components/      # React components
+│   │   │   ├── admin/       # Admin panel components
+│   │   │   ├── user/        # User dashboard components
+│   │   │   ├── common/      # Shared components
+│   │   │   └── ui/          # UI components
+│   │   ├── pages/           # Page components
+│   │   ├── context/         # React context providers
+│   │   ├── services/        # API services
+│   │   ├── utils/           # Utility functions
+│   │   └── assets/          # Static assets
+│   └── package.json
+│
+├── backend/                  # FastAPI backend
+│   ├── app/
+│   │   ├── api/             # API routes
+│   │   │   └── v1/          # API v1 endpoints
+│   │   ├── core/            # Core configuration
+│   │   ├── models/          # Data models
+│   │   ├── services/        # Business logic
+│   │   └── utils/           # Utility functions
+│   ├── main.py              # FastAPI app entry
+│   └── requirements.txt
+│
+├── database/                 # Database files
+│   ├── migrations/          # SQL migrations
+│   ├── seeds/               # Seed data
+│   └── triggers/            # Database triggers
+│
+├── ai_models/               # AI model files (not included)
+├── docs/                    # Documentation
+└── README.md
+```
+
+## 🔐 Environment Variables
+
+### Frontend (.env)
+```env
+VITE_API_URL=http://localhost:8000
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
+VITE_STRIPE_PUBLIC_KEY=your_stripe_public_key
+VITE_ADMIN_EMAIL=admin@deepvision.com
+```
+
+### Backend (.env)
+```env
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+SUPABASE_JWT_SECRET=your_jwt_secret
+SUPABASE_STORAGE_BUCKET=detection-media
+STRIPE_SECRET_KEY=your_stripe_secret_key
+MODEL_PATH=./models/deepvision_v1.pth
+FRONTEND_URL=http://localhost:5173
+```
+
+## 🎨 Key Features Explained
+
+### User Dashboard
+- Upload media files for detection
+- View detection results with confidence scores
+- Access detection history
+- Manage account settings
+
+### Admin Dashboard
+- **Analytics**: View platform-wide metrics
+- **User Management**: CRUD operations on users, bulk actions, search/filter
+- **Subscription Management**: Manage plans, pricing, and user subscriptions
+- **Model Management**: Configure AI models
+- **Feedback**: Review user feedback
+
+## 🧪 Testing
+
+```bash
+# Frontend tests
+cd frontend
+npm run test
+
+# Backend tests
+cd backend
+pytest
+```
+
+## 📝 API Documentation
+
+Once the backend is running, visit:
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- Supabase for backend infrastructure
+- React and Vite teams
+- FastAPI framework
+- All open-source contributors
+
+## 📧 Contact
+
+For questions or support, please open an issue on GitHub or contact the maintainers.
+
+## 🔒 Security
+
+- Never commit `.env` files
+- Keep Supabase keys secure
+- Use environment variables for all sensitive data
+- Enable RLS on all database tables
+- Regularly update dependencies
+
+## 🚧 Roadmap
+
+- [ ] Mobile app (React Native)
+- [ ] Batch processing
+- [ ] Advanced analytics
+- [ ] API rate limiting
+- [ ] Webhook integrations
+- [ ] Multi-language support
+
+---
+
+Made with ❤️ by the DeepVision Team

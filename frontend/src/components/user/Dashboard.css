@@ -1,0 +1,268 @@
+/* ============================================================
+   User Dashboard — DeepVision  (fully theme-aware)
+   ============================================================ */
+
+.ud-root {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 8px 8px 32px;   /* parent <main> already has 24px padding */
+  font-family: 'Inter', sans-serif;
+  color: var(--text-primary);
+  /* NO hardcoded background — inherits var(--bg-surface) from parent */
+}
+
+/* ── Header ── */
+.ud-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.ud-title {
+  font-size: 28px;
+  font-weight: 800;
+  background: linear-gradient(90deg, #4F8EF7 0%, #7B5CF6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 4px 0;
+  line-height: 1.2;
+}
+
+.ud-username-title {
+  font-size: 36px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #60a5fa 0%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 4px 0;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.ud-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.ud-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: 9999px;
+  border: none;
+  background: linear-gradient(135deg, #60a5fa 0%, #8b5cf6 100%);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  white-space: nowrap;
+}
+
+.ud-upload-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+}
+
+/* ── Shared card ── */
+.ud-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+  transition: box-shadow var(--transition-base);
+}
+
+/* ── Stats Grid ── */
+.ud-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 1100px) {
+  .ud-stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+  .ud-stats-grid { grid-template-columns: 1fr; }
+}
+
+.ud-stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 16px;
+  padding: 22px 20px;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ud-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.ud-stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ud-stat-title {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin: 0;
+}
+
+.ud-stat-value {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.15;
+  margin: 4px 0;
+}
+
+.ud-stat-change {
+  font-size: 12px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.ud-stat-change.positive { color: var(--color-success); }
+.ud-stat-change.negative { color: var(--color-error); }
+
+/* Icon badges — gradients stay vivid in both themes */
+.ud-stat-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+}
+
+.icon-blue   { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+.icon-green  { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.icon-red    { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+.icon-purple { background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%); }
+
+/* ── Middle Grid ── */
+.ud-middle-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.ud-card-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 20px 0;
+}
+
+/* Detection Activity */
+.ud-activity-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.ud-activity-full-width {
+  width: 100%;
+}
+
+.ud-chart-placeholder {
+  flex: 1;
+  min-height: 260px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.ud-chart-icon {
+  color: #5b86e5;
+  opacity: 0.85;
+}
+
+.ud-chart-label {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ── Table ── */
+.ud-table-card { overflow: hidden; }
+
+.ud-table-wrapper {
+  overflow-x: auto;
+  margin-top: 4px;
+}
+
+.ud-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.ud-table thead tr {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.ud-table th {
+  padding: 0 16px 14px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.ud-table tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: background 0.15s ease;
+}
+
+.ud-table tbody tr:hover {
+  background: var(--bg-surface);
+}
+
+.ud-table tbody tr.last-row {
+  border-bottom: none;
+}
+
+.ud-table td {
+  padding: 16px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.td-filename   { font-weight: 500; color: var(--text-primary) !important; }
+.td-confidence { font-weight: 700; color: var(--text-primary) !important; }
+.td-time       { color: var(--text-muted) !important; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .ud-root       { padding: 4px 4px 20px; gap: 18px; }
+  .ud-title      { font-size: 22px; }
+  .ud-username-title { font-size: 28px; }
+  .ud-stat-value { font-size: 26px; }
+}

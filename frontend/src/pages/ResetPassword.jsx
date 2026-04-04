@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { toast } from 'sonner';
-import logo from '../assets/LOGO.png';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabase';
+import toast from '@/utils/toast';
+import logo from '@/assets/LOGO.png';
 
 export default function ResetPassword() {
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [focused, setFocused] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
@@ -17,8 +20,18 @@ export default function ResetPassword() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        if (!password || !confirmPassword) {
+            toast.error('Please fill in all fields.');
+            return;
+        }
+
         if (password.length < 6) {
             toast.error('Password must be at least 6 characters long.');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            toast.error('Passwords do not match. Please try again.');
             return;
         }
 
@@ -26,13 +39,19 @@ export default function ResetPassword() {
             setIsLoading(true);
             const { error } = await updatePassword(password);
             if (error) {
-                toast.error(error.message || 'Failed to update password.');
+                if (error.message.includes('same as the old password')) {
+                    toast.error('New password must be different from your old password.');
+                } else {
+                    toast.error(error.message || 'Failed to update password.');
+                }
             } else {
-                toast.success('Password successfully updated. Redirecting...');
-                setTimeout(() => navigate('/signin'), 2000);
+                toast.success('Password updated successfully! Redirecting to sign in...');
+                // Sign out the user to ensure they use the new password
+                await supabase.auth.signOut();
+                setTimeout(() => navigate('/signin', { replace: true }), 2000);
             }
         } catch (err) {
-            toast.error('An unexpected error occurred.');
+            toast.error('An unexpected error occurred. Please try again.');
         } finally {
             setIsLoading(false);
         }
@@ -75,9 +94,30 @@ export default function ResetPassword() {
                                             onChange={(e) => setPassword(e.target.value)}
                                             onFocus={() => setFocused('password')}
                                             onBlur={() => setFocused('')}
+                                            autoComplete="new-password"
                                         />
                                         <button type="button" className="lfield-eye" onClick={() => setShowPassword(p => !p)} tabIndex={-1}>
                                             {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                                        </button>
+                                    </div>
+                                    <p className="lfield-hint">Must be at least 6 characters</p>
+                                </div>
+
+                                <div className="lfield-group">
+                                    <label className="lfield-label">CONFIRM PASSWORD</label>
+                                    <div className={`lfield ${focused === 'confirm' ? 'lfield--focus' : ''}`}>
+                                        <Lock size={15} className="lfield-icon" />
+                                        <input
+                                            type={showConfirmPassword ? 'text' : 'password'}
+                                            placeholder="••••••••"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            onFocus={() => setFocused('confirm')}
+                                            onBlur={() => setFocused('')}
+                                            autoComplete="new-password"
+                                        />
+                                        <button type="button" className="lfield-eye" onClick={() => setShowConfirmPassword(p => !p)} tabIndex={-1}>
+                                            {showConfirmPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                                         </button>
                                     </div>
                                 </div>
@@ -141,6 +181,7 @@ html.dark .lfield, [data-theme="dark"] .lfield { background: #12121e; border-col
 .lfield--focus .lfield-icon { color: #1a73e8; }
 .lfield input { display: block; width: 100%; padding: 14px 44px 14px 40px; background: transparent; border: none; outline: none; font-family: inherit; font-size: 0.9rem; color: #0f0f14; border-radius: 12px; }
 html.dark .lfield input, [data-theme="dark"] .lfield input { color: #f0f0fa; }
+.lfield-hint { font-size: 0.75rem; color: #8a8aa8; margin-top: 4px; }
 
 .lfield-eye {
   position: absolute; right: 12px;

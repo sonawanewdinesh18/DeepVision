@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react';
-import { AnimatedCharacters, GoogleButton } from '../components/auth';
-import { toast } from 'sonner';
-import logo from '../assets/LOGO.png';
+import { AnimatedCharacters, GoogleButton } from '@/components/auth';
+import toast from '@/utils/toast';
+import logo from '@/assets/LOGO.png';
 import './SignUp.css';
 
 export default function SignUp() {
@@ -13,8 +13,24 @@ export default function SignUp() {
   const [isTyping, setIsTyping] = useState(false);
   const [focused, setFocused] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsGoogleLoading(true);
+      const { error } = await signInWithGoogle();
+      if (error) {
+        toast.error('Failed to sign in with Google. Please try again.');
+        setIsGoogleLoading(false);
+      }
+      // Note: On success, user will be redirected by OAuth flow
+    } catch (err) {
+      toast.error('An unexpected error occurred with Google sign-in.');
+      setIsGoogleLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -41,12 +57,20 @@ export default function SignUp() {
       setIsLoading(true);
       const { error } = await signUp(form.email, form.password, form.fullName);
       if (error) {
-        toast.error(error.message || 'Failed to create account.');
+        // Handle specific error messages
+        if (error.message.includes('already registered')) {
+          toast.error('This email is already registered. Please sign in instead.');
+        } else if (error.message.includes('Invalid email')) {
+          toast.error('Please enter a valid email address.');
+        } else {
+          toast.error(error.message || 'Failed to create account.');
+        }
       } else {
-        toast.success('Account created successfully!');
-        // Option 1: auto-login works immediately, option 2 requires email confirmation.
-        // Assuming no email confirmation is required based on settings config.
-        navigate('/user-dashboard');
+        toast.success('Registration successful! Please sign in to continue.');
+        // Redirect to sign in page after successful registration
+        setTimeout(() => {
+          navigate('/signin', { state: { email: form.email } });
+        }, 1500);
       }
     } catch (err) {
       toast.error('An unexpected error occurred. Please try again.');
@@ -98,7 +122,11 @@ export default function SignUp() {
 
               {/* Google first */}
               <div className="lgoogle-wrap">
-                <GoogleButton label="Sign up with Google" onClick={signInWithGoogle} />
+                <GoogleButton 
+                  label="Sign up with Google" 
+                  onClick={handleGoogleSignIn}
+                  isLoading={isGoogleLoading}
+                />
               </div>
 
               <div className="lor"><span>OR</span></div>

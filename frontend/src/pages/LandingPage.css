@@ -1,0 +1,30 @@
+/* Hero FlipText Styling */
+.hero-flip-text {
+  background: linear-gradient(135deg, #63B3ED 0%, #8B5CF6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: clamp(1.9rem, 2.8vw, 3rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.hero-flip-text .flip-char::before,
+.hero-flip-text .flip-char::after {
+  background: linear-gradient(135deg, #63B3ED 0%, #8B5CF6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Live pulse animation for badges */
+@keyframes livepulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+}

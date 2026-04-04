@@ -1,0 +1,431 @@
+/* ============================================================
+   Navbar (User Dashboard) — DeepVision
+   ============================================================ */
+.user-navbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky, 1020);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  padding: 0 24px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  flex-shrink: 0;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.menu-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-base, 250ms ease);
+}
+
+.menu-toggle:hover {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.logo-image {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+}
+
+.logo-text {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ── Center pill toggle ── */
+.navbar-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.nav-pill-track {
+  display: flex;
+  align-items: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
+  padding: 4px;
+  gap: 2px;
+}
+
+.nav-pill-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.nav-pill-btn svg {
+  transition: all 0.2s ease;
+}
+
+.nav-pill-btn:hover svg {
+  transform: scale(1.1);
+}
+
+.nav-pill-btn:hover {
+  color: var(--text-primary);
+}
+
+.nav-pill-active svg {
+  transform: scale(1.15);
+}
+
+.nav-pill-active {
+  background: var(--bg-card);
+  background: linear-gradient(135deg, #60a5fa 0%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.nav-pill-active::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 3px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #60a5fa 0%, #7c3aed 100%);
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.theme-toggle:hover {
+  color: var(--text-primary);
+  border-color: var(--color-primary);
+}
+
+.profile-container {
+  position: relative;
+}
+
+.user-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #63B3ED 0%, #3B48CC 48%, #7B2FF7 100%);
+  color: #fff;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: 0 2px 10px rgba(108, 63, 245, 0.2);
+}
+
+.user-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 14px rgba(108, 63, 245, 0.4);
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 220px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  z-index: var(--z-popover, 1060);
+  overflow: hidden;
+  animation: fadeUp 0.2s ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-header {
+  padding: 16px;
+  background: var(--bg-surface);
+}
+
+.user-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.user-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-email {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--border-color);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.dropdown-item.danger {
+  color: var(--color-error);
+}
+
+.dropdown-item.danger:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--color-error);
+}
+
+/* ============================================================
+   Mobile Responsive Styles
+   ============================================================ */
+
+/* Tablet and below */
+@media (max-width: 768px) {
+  .user-navbar {
+    padding: 0 16px;
+    height: 56px;
+  }
+
+  .navbar-center {
+    position: static;
+    transform: none;
+    order: 3;
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .user-navbar {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 12px 16px;
+  }
+
+  .navbar-left {
+    order: 1;
+    flex: 1;
+  }
+
+  .navbar-right {
+    order: 2;
+    gap: 8px;
+  }
+
+  .nav-pill-track {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nav-pill-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+
+  .nav-pill-btn svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .logo-text {
+    font-size: 1.1rem;
+  }
+
+  .logo-image {
+    height: 32px;
+  }
+
+  .menu-toggle,
+  .theme-toggle,
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  .profile-dropdown {
+    right: 0;
+    width: 200px;
+  }
+}
+
+/* Mobile phones */
+@media (max-width: 480px) {
+  .user-navbar {
+    padding: 10px 12px;
+  }
+
+  .navbar-left {
+    gap: 8px;
+  }
+
+  .logo-text {
+    display: none;
+  }
+
+  .logo-image {
+    height: 28px;
+  }
+
+  .nav-pill-btn {
+    padding: 7px 12px;
+    font-size: 13px;
+    gap: 6px;
+  }
+
+  .nav-pill-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .navbar-right {
+    gap: 6px;
+  }
+
+  .menu-toggle,
+  .theme-toggle,
+  .user-avatar {
+    width: 30px;
+    height: 30px;
+  }
+
+  .theme-toggle svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .profile-dropdown {
+    width: 180px;
+    right: -12px;
+  }
+
+  .dropdown-header {
+    padding: 12px;
+  }
+
+  .user-name {
+    font-size: 0.85rem;
+  }
+
+  .user-email {
+    font-size: 0.75rem;
+  }
+
+  .dropdown-item {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 360px) {
+  .nav-pill-btn span:not(.nav-pill-btn svg) {
+    display: none;
+  }
+
+  .nav-pill-btn {
+    padding: 8px;
+    min-width: 40px;
+  }
+
+  .nav-pill-track {
+    gap: 4px;
+  }
+}

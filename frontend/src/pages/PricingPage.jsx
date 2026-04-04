@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, X, ArrowRight, Zap, Shield, BarChart3, Lock, Star, ChevronDown } from 'lucide-react';
-import Navbar from '../components/Navbar';
+import Navbar from '@/components/common/Navbar';
 
 const PLANS = [
     {
@@ -285,7 +285,7 @@ export default function PricingPage() {
                             {PLANS.map(plan=>(
                                 <div key={plan.name} style={{ display:'flex', justifyContent:'center' }}>
                                     <button onClick={()=>handleChoose(plan)}
-                                        style={{ padding:'9px 20px', borderRadius:10, border:'none', fontWeight:700, fontSize:'0.8rem', cursor:'pointer', transition:'all 0.2s',
+                                        style={{ padding:'9px 20px', borderRadius:10, fontWeight:700, fontSize:'0.8rem', cursor:'pointer', transition:'all 0.2s',
                                             background: plan.highlight ? 'linear-gradient(135deg,#6C3FF5,#8B5CF6)' : 'var(--bg-card)',
                                             color: plan.highlight ? '#fff' : 'var(--text-primary)',
                                             border: plan.highlight ? 'none' : '1px solid var(--border-card)',

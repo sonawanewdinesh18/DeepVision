@@ -2,10 +2,13 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Zap, Shield, Brain, BarChart3, Upload, Play, Lock, CheckCircle, Mail, Phone, MapPin, Clock, Send, Github, Linkedin } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import Navbar from '../components/Navbar';
-import demoVideo from '../assets/DeepFake.mp4';
-import logoImg from '../assets/LOGO.png';
+import { useAuth } from '@/context/AuthContext';
+import { FlipText } from '@/components/ui/flip-text';
+import Navbar from '@/components/common/Navbar';
+import './LandingPage.css';
+// import demoVideo from '@/assets/DeepFake.mp4';
+const demoVideo = null; // Fallback as the file is missing in assets
+import logoImg from '@/assets/LOGO.png';
 
 /* ─── Count-up hook ─────────────────────────────────────────── */
 function useCountUp(target, duration = 1800, delay = 2700) {
@@ -304,21 +307,42 @@ export default function LandingPage() {
 
                         {/* Letter-drop title */}
                         <h1 style={{ fontWeight: 900, lineHeight: 1.12, letterSpacing: '-0.03em', margin: '0 0 20px' }}>
-                            <div style={{ fontSize: 'clamp(1.9rem,2.8vw,3rem)', whiteSpace: 'nowrap' }}>
-                                <DropText words={['Deep', 'Learning-Based']} delay={0.1} color="var(--text-primary)" />
+                            <div style={{ fontSize: 'clamp(2.2rem,3.2vw,3.5rem)', whiteSpace: 'nowrap' }}>
+                                <DropText words={['See', 'Everything', 'with']} delay={0.1} color="var(--text-primary)" />
                             </div>
-                            <div style={{ fontSize: 'clamp(1.9rem,2.8vw,3rem)', whiteSpace: 'nowrap' }}>
-                                <DropText words={['Deepfake', 'Detection']} delay={0.5} color="var(--text-primary)" />
-                            </div>
-                            <div style={{ fontSize: 'clamp(1.9rem,2.8vw,3rem)', whiteSpace: 'nowrap' }}>
-                                <DropText words={['in', 'Visual', 'Media']} delay={0.95} gradient="linear-gradient(135deg,#63B3ED,#8B5CF6)" />
+                            <div style={{ fontSize: 'clamp(2.2rem,3.2vw,3.5rem)', display: 'flex', gap: '0.3em' }}>
+                                <FlipText 
+                                  className="hero-flip-text" 
+                                  duration={2.2} 
+                                  delay={0.5}
+                                  style={{ 
+                                    background: 'linear-gradient(135deg, #63B3ED 0%, #3B82F6 100%)',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    backgroundClip: 'text'
+                                  }}
+                                >
+                                  AI-Powered
+                                </FlipText>
+                                <FlipText 
+                                  className="hero-flip-text" 
+                                  duration={2.2} 
+                                  delay={0.8}
+                                  style={{ 
+                                    background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    backgroundClip: 'text'
+                                  }}
+                                >
+                                  Vision
+                                </FlipText>
                             </div>
                         </h1>
 
                         <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2.2, duration: 0.6 }}
-                            style={{ fontSize: '1rem', color: 'var(--text-secondary)', lineHeight: 1.75, maxWidth: 440, marginBottom: 32 }}>
-                            Our advanced deep learning system analyzes images and videos in real time
-                            to identify deepfakes and manipulated media with high accuracy.
+                            style={{ fontSize: '1rem', color: 'var(--text-secondary)', lineHeight: 1.75, maxWidth: 540, marginBottom: 32 }}>
+                            DeepVision gives your team superhuman visual intelligence — detect, classify, and act on what matters instantly, at any scale.
                         </motion.p>
 
                         {/* Buttons */}
@@ -404,8 +428,14 @@ export default function LandingPage() {
 
                             {/* Video */}
                             <div style={{ position: 'relative', aspectRatio: '16/9', background: '#000' }}>
-                                <video ref={videoRef} src={demoVideo} loop muted playsInline autoPlay
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                                {demoVideo ? (
+                                    <video ref={videoRef} src={demoVideo} loop muted playsInline autoPlay
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                                ) : (
+                                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', fontSize: '0.9rem' }}>
+                                        Demo video placeholder
+                                    </div>
+                                )}
 
                                 {/* scan line */}
                                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,transparent 0%,rgba(108,63,245,0.04) 50%,transparent 100%)', pointerEvents: 'none' }} />
@@ -513,7 +543,7 @@ export default function LandingPage() {
                 </motion.div>
 
                 {/* Video modal */}
-                {showVideo && (
+                {showVideo && demoVideo && (
                     <div onClick={() => setShowVideo(false)} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
                         <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 960, borderRadius: 20, overflow: 'hidden', boxShadow: '0 40px 100px rgba(0,0,0,0.7)', position: 'relative' }}>
                             {/* close button */}
@@ -1198,95 +1228,109 @@ export default function LandingPage() {
             </section>
 
             {/* ═══ FOOTER ══════════════════════════════════════════════ */}
-            <footer style={{ background:'var(--bg-surface)', borderTop:'1px solid var(--border-color)', position:'relative', overflow:'hidden' }}>
-                <div style={{ height:3, background:'linear-gradient(90deg,transparent 0%,#6C3FF5 30%,#8B5CF6 50%,#06b6d4 70%,transparent 100%)' }}/>
+            <footer style={{ background:'linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-base) 100%)', borderTop:'1px solid var(--border-color)', position:'relative', overflow:'hidden' }}>
+                {/* Gradient top border */}
+                <div style={{ height:4, background:'linear-gradient(90deg, transparent 0%, #667eea 20%, #764ba2 40%, #f093fb 60%, #4facfe 80%, transparent 100%)', opacity:0.8 }}/>
+                
+                {/* Decorative background elements */}
+                <div style={{ position:'absolute', top:0, left:'10%', width:300, height:300, background:'radial-gradient(circle, rgba(102,126,234,0.08) 0%, transparent 70%)', borderRadius:'50%', filter:'blur(60px)', pointerEvents:'none' }}/>
+                <div style={{ position:'absolute', bottom:0, right:'10%', width:400, height:400, background:'radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%)', borderRadius:'50%', filter:'blur(80px)', pointerEvents:'none' }}/>
 
-                {/* main grid */}
-                <div style={{ maxWidth:1160, margin:'0 auto', padding:'64px 40px 48px', display:'grid', gridTemplateColumns:'2.2fr 1fr 1fr 1fr', gap:48 }}>
+                {/* main grid - 3 columns: left, center, right */}
+                <div style={{ maxWidth:1200, margin:'0 auto', padding:'50px 40px 40px', display:'grid', gridTemplateColumns:'1fr auto 1fr', gap:60, position:'relative', zIndex:1, alignItems:'start' }}>
 
-                    {/* brand */}
+                    {/* LEFT - DeepVision Brand */}
                     <div>
-                        <div style={{ display:'flex', alignItems:'center', gap:9, marginBottom:16 }}>
-                            <img src="/src/assets/LOGO.png" alt="DeepVision" style={{ height:30 }}/>
-                            <span style={{ fontWeight:900, fontSize:'1.25rem', letterSpacing:'-0.02em', lineHeight:1 }}>
-                                <span style={{ background:'linear-gradient(160deg,#63B3ED,#2B6CB0,#3B48CC)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Deep</span>
-                                <span style={{ background:'linear-gradient(160deg,#553ECC,#7B2FF7,#5B21B6)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Vision</span>
+                        <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16 }}>
+                            <div style={{ width:40, height:40, borderRadius:12, background:'linear-gradient(135deg, rgba(102,126,234,0.15), rgba(139,92,246,0.15))', display:'flex', alignItems:'center', justifyContent:'center', border:'1px solid rgba(102,126,234,0.2)' }}>
+                                <img src={logoImg} alt="DeepVision" style={{ height:24, width:24, objectFit:'contain' }}/>
+                            </div>
+                            <span style={{ fontWeight:900, fontSize:'1.3rem', letterSpacing:'-0.03em', lineHeight:1 }}>
+                                <span style={{ background:'linear-gradient(135deg, #63B3ED 0%, #3B82F6 100%)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>Deep</span>
+                                <span style={{ background:'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>Vision</span>
                             </span>
                         </div>
-                        <p style={{ color:'var(--text-muted)', fontSize:'0.85rem', lineHeight:1.8, maxWidth:300, marginBottom:28 }}>
-                            AI-powered deepfake detection for images and videos. Protecting truth in the age of synthetic media since 2024.
+                        <p style={{ color:'var(--text-secondary)', fontSize:'0.88rem', lineHeight:1.7, marginBottom:20, fontWeight:450, maxWidth:280 }}>
+                            AI-powered deepfake detection for images and videos.
                         </p>
-                        <div style={{ display:'flex', gap:8, marginBottom:28 }}>
+                        <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'10px 16px', background:'linear-gradient(135deg, rgba(16,185,129,0.08), rgba(5,150,105,0.08))', border:'1.5px solid rgba(16,185,129,0.2)', borderRadius:12, backdropFilter:'blur(10px)' }}>
+                            <div style={{ width:7, height:7, borderRadius:'50%', background:'linear-gradient(135deg, #10b981, #059669)', boxShadow:'0 0 10px rgba(16,185,129,0.6)', animation:'pulse 2s ease-in-out infinite' }}/>
+                            <span style={{ fontSize:'0.75rem', color:'#10b981', fontWeight:700, letterSpacing:'0.02em' }}>All Systems Operational</span>
+                        </div>
+                    </div>
+
+                    {/* CENTER - Quick Links */}
+                    <div style={{ minWidth:200 }}>
+                        <div style={{ fontSize:'0.7rem', fontWeight:900, color:'var(--text-primary)', textTransform:'uppercase', letterSpacing:'0.16em', marginBottom:20, paddingBottom:12, borderBottom:'2px solid transparent', backgroundImage:'linear-gradient(90deg, var(--border-color) 0%, transparent 100%)', backgroundPosition:'0 100%', backgroundSize:'100% 2px', backgroundRepeat:'no-repeat' }}>
+                            Quick Links
+                        </div>
+                        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
                             {[
-                                { Icon:Linkedin, color:'#0A66C2', href:'https://linkedin.com' },
-                                { Icon:Github,   color:'#ffffff', href:'https://github.com'   },
-                            ].map(({ Icon, color, href }) => (
-                                <button key={color}
-                                    onClick={() => { if (!user) { sessionStorage.setItem('pendingRedirect','/'); navigate('/signin'); return; } window.open(href,'_blank','noopener,noreferrer'); }}
-                                    style={{ width:38, height:38, borderRadius:999, border:'1px solid var(--border-color)', background:'var(--bg-card)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.2s', color:'var(--text-muted)' }}
-                                    onMouseEnter={e=>{ e.currentTarget.style.borderColor=color; e.currentTarget.style.color=color; e.currentTarget.style.background=`${color}15`; e.currentTarget.style.transform='translateY(-2px)'; }}
-                                    onMouseLeave={e=>{ e.currentTarget.style.borderColor='var(--border-color)'; e.currentTarget.style.color='var(--text-muted)'; e.currentTarget.style.background='var(--bg-card)'; e.currentTarget.style.transform='translateY(0)'; }}>
-                                    <Icon size={15}/>
-                                </button>
-                            ))}
-                        </div>
-                        <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 14px', background:'rgba(16,185,129,0.06)', border:'1px solid rgba(16,185,129,0.15)', borderRadius:12, width:'fit-content' }}>
-                            <div style={{ width:7, height:7, borderRadius:'50%', background:'#10b981', boxShadow:'0 0 8px #10b981' }}/>
-                            <span style={{ fontSize:'0.75rem', color:'#10b981', fontWeight:700 }}>All systems operational</span>
-                        </div>
-                    </div>
-
-                    {/* Product */}
-                    <div>
-                        <div style={{ fontSize:'0.68rem', fontWeight:900, color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.14em', marginBottom:22, paddingBottom:12, borderBottom:'1px solid var(--border-color)' }}>Product</div>
-                        <div style={{ display:'flex', flexDirection:'column', gap:13 }}>
-                            {[['Features','#features'],['How It Works','#how-it-works'],['Pricing','#pricing'],['API Docs','#'],['Changelog','#'],['Status','#']].map(([l,h])=>(
-                                <a key={l} href={h} style={{ color:'var(--text-secondary)', fontSize:'0.85rem', textDecoration:'none', transition:'all 0.2s', fontWeight:500, display:'flex', alignItems:'center', gap:6 }}
-                                    onMouseEnter={e=>{ e.currentTarget.style.color='var(--color-primary-light)'; e.currentTarget.style.paddingLeft='6px'; }}
-                                    onMouseLeave={e=>{ e.currentTarget.style.color='var(--text-secondary)'; e.currentTarget.style.paddingLeft='0'; }}>{l}</a>
+                                ['Home','/', '🏠'],
+                                ['Features','#features', '✨'],
+                                ['About Us','#about', '👥'],
+                                ['Pricing','/pricing', '💎'],
+                                ['Contact Us','#contact', '📧']
+                            ].map(([l,h,emoji])=>(
+                                <a key={l} href={h} style={{ color:'var(--text-secondary)', fontSize:'0.88rem', textDecoration:'none', transition:'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', fontWeight:500, display:'flex', alignItems:'center', gap:10, padding:'6px 10px', borderRadius:8, marginLeft:'-10px' }}
+                                    onMouseEnter={e=>{ e.currentTarget.style.color='var(--color-primary-light)'; e.currentTarget.style.paddingLeft='16px'; e.currentTarget.style.background='rgba(102,126,234,0.06)'; }}
+                                    onMouseLeave={e=>{ e.currentTarget.style.color='var(--text-secondary)'; e.currentTarget.style.paddingLeft='10px'; e.currentTarget.style.background='transparent'; }}>
+                                    <span style={{ fontSize:'1rem' }}>{emoji}</span>
+                                    {l}
+                                </a>
                             ))}
                         </div>
                     </div>
 
-                    {/* Company */}
-                    <div>
-                        <div style={{ fontSize:'0.68rem', fontWeight:900, color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.14em', marginBottom:22, paddingBottom:12, borderBottom:'1px solid var(--border-color)' }}>Company</div>
-                        <div style={{ display:'flex', flexDirection:'column', gap:13 }}>
-                            {[['About Us','#about'],['Blog','#'],['Careers','#'],['Press Kit','#'],['Contact','#contact'],['Partners','#']].map(([l,h])=>(
-                                <a key={l} href={h} style={{ color:'var(--text-secondary)', fontSize:'0.85rem', textDecoration:'none', transition:'all 0.2s', fontWeight:500 }}
-                                    onMouseEnter={e=>{ e.currentTarget.style.color='var(--color-primary-light)'; e.currentTarget.style.paddingLeft='6px'; }}
-                                    onMouseLeave={e=>{ e.currentTarget.style.color='var(--text-secondary)'; e.currentTarget.style.paddingLeft='0'; }}>{l}</a>
-                            ))}
+                    {/* RIGHT - Connect */}
+                    <div style={{ textAlign:'right' }}>
+                        <div style={{ fontSize:'0.7rem', fontWeight:900, color:'var(--text-primary)', textTransform:'uppercase', letterSpacing:'0.16em', marginBottom:20, paddingBottom:12, borderBottom:'2px solid transparent', backgroundImage:'linear-gradient(90deg, transparent 0%, var(--border-color) 100%)', backgroundPosition:'0 100%', backgroundSize:'100% 2px', backgroundRepeat:'no-repeat' }}>
+                            Connect With Us
                         </div>
-                    </div>
-
-                    {/* Legal */}
-                    <div>
-                        <div style={{ fontSize:'0.68rem', fontWeight:900, color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.14em', marginBottom:22, paddingBottom:12, borderBottom:'1px solid var(--border-color)' }}>Legal</div>
-                        <div style={{ display:'flex', flexDirection:'column', gap:13 }}>
-                            {[['Privacy Policy','#'],['Terms of Service','#'],['Cookie Policy','#'],['Security','#'],['GDPR','#'],['Accessibility','#']].map(([l,h])=>(
-                                <a key={l} href={h} style={{ color:'var(--text-secondary)', fontSize:'0.85rem', textDecoration:'none', transition:'all 0.2s', fontWeight:500 }}
-                                    onMouseEnter={e=>{ e.currentTarget.style.color='var(--color-primary-light)'; e.currentTarget.style.paddingLeft='6px'; }}
-                                    onMouseLeave={e=>{ e.currentTarget.style.color='var(--text-secondary)'; e.currentTarget.style.paddingLeft='0'; }}>{l}</a>
+                        <p style={{ color:'var(--text-secondary)', fontSize:'0.88rem', lineHeight:1.6, marginBottom:20, fontWeight:450 }}>
+                            Stay updated with latest news and features.
+                        </p>
+                        <div style={{ display:'flex', gap:10, flexWrap:'wrap', justifyContent:'flex-end' }}>
+                            {[
+                                { Icon:Linkedin, label:'LinkedIn', color:'#0A66C2', bgGradient:'linear-gradient(135deg, #0A66C2, #004182)', href:'https://www.linkedin.com/in/dinesh-sonawane-827360343/' },
+                                { Icon:Github, label:'GitHub', color:'#6e5494', bgGradient:'linear-gradient(135deg, #6e5494, #4a3a6a)', href:'https://github.com/sonawanewdinesh18' },
+                                { Icon:Mail, label:'Email', color:'#EA4335', bgGradient:'linear-gradient(135deg, #EA4335, #C5221F)', href:'mailto:dineshsonawanew2004@gmail.com' }
+                            ].map(({ Icon, label, color, bgGradient, href }) => (
+                                <a key={label} href={href} target="_blank" rel="noopener noreferrer"
+                                    style={{ width:46, height:46, borderRadius:12, border:'1.5px solid var(--border-color)', background:'var(--bg-card)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', color:'var(--text-muted)', textDecoration:'none', position:'relative', overflow:'hidden' }}
+                                    onMouseEnter={e=>{ 
+                                        e.currentTarget.style.borderColor=color; 
+                                        e.currentTarget.style.color='white'; 
+                                        e.currentTarget.style.background=bgGradient; 
+                                        e.currentTarget.style.transform='translateY(-4px) scale(1.05)'; 
+                                        e.currentTarget.style.boxShadow=`0 8px 24px ${color}50, 0 4px 12px ${color}30`; 
+                                    }}
+                                    onMouseLeave={e=>{ 
+                                        e.currentTarget.style.borderColor='var(--border-color)'; 
+                                        e.currentTarget.style.color='var(--text-muted)'; 
+                                        e.currentTarget.style.background='var(--bg-card)'; 
+                                        e.currentTarget.style.transform='translateY(0) scale(1)'; 
+                                        e.currentTarget.style.boxShadow='none'; 
+                                    }}
+                                    title={label}>
+                                    <Icon size={19} strokeWidth={2}/>
+                                </a>
                             ))}
                         </div>
                     </div>
                 </div>
 
                 {/* bottom bar */}
-                <div style={{ borderTop:'1px solid var(--border-color)' }}>
-                    <div style={{ maxWidth:1160, margin:'0 auto', padding:'20px 40px', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:16 }}>
-                            <p style={{ color:'var(--text-muted)', fontSize:'0.78rem', margin:0 }}>© 2026 DeepVision Inc. All rights reserved.</p>
-                            <span style={{ color:'var(--border-color)' }}>·</span>
-                            <p style={{ color:'var(--text-muted)', fontSize:'0.78rem', margin:0 }}>Made with ❤️ in India</p>
-                        </div>
-                        <div style={{ display:'flex', gap:20 }}>
-                            {['Privacy','Terms','Security','Cookies'].map(l=>(
-                                <a key={l} href="#" style={{ color:'var(--text-muted)', fontSize:'0.78rem', textDecoration:'none', transition:'color 0.2s', fontWeight:500 }}
-                                    onMouseEnter={e=>e.currentTarget.style.color='var(--text-primary)'}
-                                    onMouseLeave={e=>e.currentTarget.style.color='var(--text-muted)'}>{l}</a>
-                            ))}
+                <div style={{ borderTop:'1px solid var(--border-color)', background:'rgba(0,0,0,0.02)', position:'relative', zIndex:1 }}>
+                    <div style={{ maxWidth:1200, margin:'0 auto', padding:'22px 40px', display:'flex', alignItems:'center', justifyContent:'center', flexWrap:'wrap', gap:16 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:20, flexWrap:'wrap' }}>
+                            <p style={{ color:'var(--text-muted)', fontSize:'0.85rem', margin:0, fontWeight:500 }}>
+                                © 2026 DeepVision Inc. All rights reserved.
+                            </p>
+                            <span style={{ color:'var(--border-color)', fontSize:'1.2rem' }}>·</span>
+                            <p style={{ color:'var(--text-muted)', fontSize:'0.85rem', margin:0, display:'flex', alignItems:'center', gap:6 }}>
+                                Made with <span style={{ color:'#ef4444', fontSize:'1.1rem', animation:'heartbeat 1.5s ease-in-out infinite' }}>❤️</span> in India
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -1350,6 +1394,12 @@ export default function LandingPage() {
         .btn-white:hover {
           transform: translateY(-2px);
           box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+        }
+
+        @keyframes heartbeat {
+          0%, 100% { transform: scale(1); }
+          10%, 30% { transform: scale(1.15); }
+          20%, 40% { transform: scale(1.05); }
         }
       `}</style>
         </div>

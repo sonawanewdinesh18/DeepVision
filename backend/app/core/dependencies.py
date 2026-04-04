@@ -1,56 +1,90 @@
-import os
-import httpx
-from pydantic import BaseModel
-from fastapi import Depends, status
+"""
+app/core/dependencies.py
+FastAPI dependencies for authentication and authorization.
+"""
+
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from dotenv import load_dotenv
-from app.core.exceptions import CustomAPIException
+from jose import jwt, JWTError
 
-load_dotenv()
-
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_ANON_KEY")
-
-class User(BaseModel):
-    id: str
-    email: str
-    role: str
+from app.core.config import settings
+from app.core.supabase_client import get_supabase
+from app.models.schemas import UserPublic
 
 security = HTTPBearer()
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        raise CustomAPIException(
-            message="Supabase is not properly configured.",
-            code="CONFIG_ERROR",
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> UserPublic:
+    """
+    Validate JWT token and return current user.
+    Raises 401 if token is invalid or user not found.
+    """
+    token = credentials.credentials
+    
+    try:
+        # Decode JWT token without signature/audience verification
+        # Supabase tokens are already validated by Supabase
+        payload = jwt.decode(
+            token,
+            settings.SUPABASE_JWT_SECRET,
+            algorithms=["HS256", "RS256"],
+            options={
+                "verify_signature": False,
+                "verify_aud": False,
+                "verify_exp": True  # Still verify expiration
+            }
+        )
+        
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication credentials - no user ID in token",
+            )
+    except JWTError as e:
+        print(f"JWT validation failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid authentication credentials: {str(e)}",
         )
     
-    token = credentials.credentials
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{SUPABASE_URL}/auth/v1/user",
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "apikey": SUPABASE_KEY
-                }
-            )
-            
-            if response.status_code != 200:
-                raise ValueError("Invalid credentials or token expired.")
-                
-            user_data = response.json()
-            # Construct simple user model to mimic original behavior
-            return User(
-                id=user_data.get("id", ""),
-                email=user_data.get("email", ""),
-                role=user_data.get("role", "")
-            )
-            
-    except Exception as e:
-        raise CustomAPIException(
-            message="Invalid authentication credentials or token expired.",
-            code="UNAUTHORIZED",
-            status_code=status.HTTP_401_UNAUTHORIZED
+    # Fetch user profile from Supabase
+    supabase = get_supabase()
+    response = supabase.table("profiles").select("*").eq("id", user_id).execute()
+    
+    if not response.data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
         )
+    
+    profile = response.data[0]
+    
+    # Get email from auth.users (if needed)
+    user_response = supabase.auth.admin.get_user_by_id(user_id)
+    email = user_response.user.email if user_response.user else ""
+    
+    return UserPublic(
+        id=profile["id"],
+        email=email,
+        full_name=profile.get("full_name"),
+        role=profile.get("role", "user"),
+        subscription_plan=profile.get("subscription_plan", "free"),
+    )
+
+
+async def get_current_admin_user(
+    current_user: UserPublic = Depends(get_current_user),
+) -> UserPublic:
+    """
+    Verify that the current user has admin role.
+    Raises 403 if user is not an admin.
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return current_user

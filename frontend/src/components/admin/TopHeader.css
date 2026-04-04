@@ -1,0 +1,157 @@
+/* ============================================================
+   TopHeader — DeepVision Admin
+   Uses CSS variables from index.css / design-system.css
+   ============================================================ */
+.top-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky, 1020);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  padding: 0 24px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.menu-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-base, 250ms ease);
+}
+
+.menu-toggle:hover {
+  color: var(--text-primary);
+  border-color: var(--color-primary);
+}
+
+.logo-container-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.logo-image-header {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+}
+
+.logo-text-header {
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  display: flex;
+  gap: 2px;
+}
+
+.header-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: rgba(139, 92, 246, 0.15);
+  color: #8B5CF6;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-base, 250ms ease);
+}
+
+.theme-toggle:hover {
+  color: var(--text-primary);
+  border-color: var(--color-primary);
+}
+
+.profile-container {
+  position: relative;
+}
+
+.user-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-base, 250ms ease);
+}
+
+.user-avatar:hover {
+  color: var(--text-primary);
+  border-color: var(--color-primary);
+  background: var(--bg-card);
+}
+
+.user-avatar-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all var(--transition-base, 250ms ease);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
+}
+
+.user-avatar-initials:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+}
+
+@media (max-width: 768px) {
+  .logo-container-header {
+    display: none;
+  }
+}
