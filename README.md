@@ -13,11 +13,18 @@ DeepVision is a comprehensive web application for detecting deepfakes in images 
 - **Dashboard Analytics**: View your detection statistics and trends
 - **Subscription Plans**: Choose from Free, Pro, or Enterprise plans
 
+### AI Detection Features
+- **Dual Model System**: Separate optimized models for images and videos
+- **Professional Validation**: Comprehensive file format, size, and quality checks
+- **Real-time Processing**: Fast inference with detailed confidence scores
+- **Batch Processing**: Support for multiple file uploads
+- **Model Monitoring**: Admin dashboard for AI model status and performance
+
 ### Admin Features
 - **Analytics Dashboard**: Comprehensive platform metrics and insights
 - **User Management**: Manage users, roles, and subscriptions
 - **Subscription Management**: Handle pricing plans and billing
-- **Model Management**: Configure and monitor AI detection models
+- **AI Model Management**: Monitor model status and performance metrics
 - **Feedback System**: Review and respond to user feedback
 
 ## 🛠️ Tech Stack
@@ -34,7 +41,16 @@ DeepVision is a comprehensive web application for detecting deepfakes in images 
 - **FastAPI** (Python)
 - **Supabase** for database and storage
 - **PyTorch** for AI model inference
+- **OpenCV** for video processing
+- **Pillow** for image processing
 - **Pydantic** for data validation
+
+### AI/ML Stack
+- **PyTorch** - Deep learning framework
+- **TorchVision** - Computer vision models
+- **OpenCV** - Video/image processing
+- **NumPy** - Numerical computing
+- **Separate Models** - Dedicated image and video detection models
 
 ### Database
 - **PostgreSQL** (via Supabase)
@@ -86,7 +102,24 @@ cp .env.example .env
 # Edit .env with your Supabase credentials
 ```
 
-### 4. Database Setup
+### 4. AI Models Setup
+
+```bash
+# Install AI dependencies
+cd backend
+pip install torch torchvision opencv-python pillow numpy
+
+# Add your trained models to ai_models directory
+cp /path/to/your/image_model.pth ai_models/deepvision_image_v1.pth
+cp /path/to/your/video_model.pth ai_models/deepvision_video_v1.pth
+
+# Test AI integration
+python test_ai_integration.py
+```
+
+**📖 For detailed AI setup instructions, see [AI_SETUP_GUIDE.md](AI_SETUP_GUIDE.md)**
+
+### 5. Database Setup
 
 1. Create a Supabase project at [supabase.com](https://supabase.com)
 2. Run the SQL migrations in order:

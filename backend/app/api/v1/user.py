@@ -46,6 +46,34 @@ async def get_current_user_profile(
     return current_user
 
 
+@router.post("/update-last-active", response_model=SuccessResponse)
+async def update_last_active(
+    current_user: UserPublic = Depends(get_current_user),
+):
+    """Update user's last active timestamp."""
+    supabase = get_supabase()
+    
+    try:
+        # Update the profile's updated_at timestamp
+        response = supabase.table("profiles").update({
+            "updated_at": datetime.utcnow().isoformat()
+        }).eq("id", current_user.id).execute()
+        
+        if not response.data:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to update last active time"
+            )
+        
+        return SuccessResponse(message="Last active time updated successfully")
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update last active time: {str(e)}"
+        )
+
+
 @router.put("/me", response_model=UserPublic)
 async def update_user_profile(
     update_data: UserUpdate,

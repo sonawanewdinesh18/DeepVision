@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 
 from app.core.dependencies import get_current_admin_user, get_supabase
 from app.models.schemas import UserPublic
+from app.services.detection_service import detection_service
 from supabase import Client
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -186,9 +187,9 @@ async def get_all_users(
     try:
         offset = (page - 1) * limit
         
-        # Get users
+        # Get users with updated_at field
         response = supabase.table("profiles")\
-            .select("id, email, full_name, role, subscription_plan, is_active, created_at")\
+            .select("id, email, full_name, role, subscription_plan, is_active, created_at, updated_at")\
             .range(offset, offset + limit - 1)\
             .execute()
         
@@ -200,15 +201,20 @@ async def get_all_users(
                 .eq("user_id", profile["id"])\
                 .execute()
             
-            # Get last active (last detection date)
-            last_detection = supabase.table("detections")\
-                .select("created_at")\
-                .eq("user_id", profile["id"])\
-                .order("created_at", desc=True)\
-                .limit(1)\
-                .execute()
+            # Use updated_at as last_active (this shows when user last signed in or updated profile)
+            # If updated_at is not available, fall back to last detection, then created_at
+            last_active = profile.get("updated_at")
             
-            last_active = last_detection.data[0]["created_at"] if last_detection.data else profile["created_at"]
+            if not last_active:
+                # Fallback to last detection date
+                last_detection = supabase.table("detections")\
+                    .select("created_at")\
+                    .eq("user_id", profile["id"])\
+                    .order("created_at", desc=True)\
+                    .limit(1)\
+                    .execute()
+                
+                last_active = last_detection.data[0]["created_at"] if last_detection.data else profile["created_at"]
             
             users.append({
                 "id": profile["id"],
@@ -545,6 +551,30 @@ async def delete_model(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete model: {str(e)}"
         )
+
+
+@router.get("/ai-status")
+async def get_ai_model_status(
+    admin: UserPublic = Depends(get_current_admin_user)
+):
+    """Get current AI model status for monitoring."""
+    try:
+        model_status = detection_service.get_model_status()
+        return {
+            "status": "success",
+            "models": model_status,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "models": {
+                "image_model": {"loaded": False, "error": str(e)},
+                "video_model": {"loaded": False, "error": str(e)}
+            },
+            "timestamp": datetime.now().isoformat()
+        }
 
 
 # ==================== FEEDBACK MANAGEMENT CRUD ====================

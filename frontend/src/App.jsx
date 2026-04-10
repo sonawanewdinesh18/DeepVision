@@ -11,6 +11,18 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { ErrorBoundary, OfflineDetector } from '@/components/common';
 import AppRoutes from '@/router/routes';
+import useLastActive from '@/hooks/useLastActive';
+
+function AppContent() {
+  // Track user activity and update last active time
+  useLastActive();
+
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
+  );
+}
 
 export default function App() {
   return (
@@ -34,9 +46,7 @@ export default function App() {
         <OfflineDetector />
         
         <AuthProvider>
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
+          <AppContent />
         </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>
