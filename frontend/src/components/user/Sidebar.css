@@ -318,50 +318,6 @@
   flex-shrink: 0;
 }
 
-/* User profile at bottom (fixed) */
-.sb-user-profile {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-top: 1px solid var(--border-color);
-  background: var(--bg-card);
-  flex-shrink: 0;
-}
-
-.sb-user-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #60a5fa 0%, #8B5CF6 100%);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.sb-user-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.sb-user-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sb-user-plan {
-  font-size: 12px;
-  color: var(--text-muted, #9ca3af);
-}
-
 /* Dark mode support for menu and compact history */
 html.dark .sb-menu-btn {
   color: var(--text-muted, #9ca3af);
@@ -411,18 +367,5 @@ html.dark .sb-hi-name {
 }
 
 html.dark .sb-pin-icon {
-  color: var(--text-muted, #9ca3af);
-}
-
-html.dark .sb-user-profile {
-  background: var(--bg-card);
-  border-top-color: rgba(255, 255, 255, 0.1);
-}
-
-html.dark .sb-user-name {
-  color: var(--text-primary, #f9fafb);
-}
-
-html.dark .sb-user-plan {
   color: var(--text-muted, #9ca3af);
 }

@@ -25,8 +25,7 @@ const UserManagement = () => {
     email: '',
     full_name: '',
     password: '',
-    role: 'user',
-    subscription_plan: 'free'
+    role: 'user'
   });
   
   // Bulk Actions State
@@ -418,18 +417,6 @@ const UserManagement = () => {
     }
   };
 
-  const handleSubscriptionChange = async (userId, newPlan) => {
-    try {
-      await adminApi.updateSubscription(userId, newPlan);
-      const user = users.find(u => u.id === userId);
-      logAudit('Changed Subscription', `${user?.email || 'Unknown user'} → ${newPlan}`);
-      toast.success(`Subscription updated to ${newPlan}`);
-      fetchUsers();
-    } catch (err) {
-      toast.error('Failed to update subscription');
-    }
-  };
-
   const handleAddUser = async (e) => {
     e.preventDefault();
     
@@ -449,8 +436,7 @@ const UserManagement = () => {
         email: newUserData.email.toLowerCase().trim(),
         password: newUserData.password,
         full_name: newUserData.full_name || 'New User',
-        role: newUserData.role,
-        subscription_plan: newUserData.subscription_plan
+        role: newUserData.role
       });
 
       toast.success('User created successfully!');
@@ -459,8 +445,7 @@ const UserManagement = () => {
         email: '',
         full_name: '',
         password: '',
-        role: 'user',
-        subscription_plan: 'free'
+        role: 'user'
       });
       fetchUsers();
     } catch (err) {
@@ -472,13 +457,12 @@ const UserManagement = () => {
   const handleExportUsers = () => {
     try {
       // Convert users to CSV
-      const headers = ['Email', 'Full Name', 'Role', 'Status', 'Subscription', 'Detections', 'Created At'];
+      const headers = ['Email', 'Full Name', 'Role', 'Status', 'Detections', 'Created At'];
       const csvData = filteredUsers.map(user => [
         user.email,
         user.full_name || 'N/A',
         user.role,
         user.is_active ? 'Active' : 'Disabled',
-        user.subscription_plan,
         user.detection_count || 0,
         new Date(user.created_at).toLocaleDateString()
       ]);
@@ -813,9 +797,6 @@ const UserManagement = () => {
                 <th onClick={() => handleSort('is_active')} className="um-sortable">
                   STATUS {getSortIcon('is_active')}
                 </th>
-                <th onClick={() => handleSort('subscription_plan')} className="um-sortable">
-                  SUBSCRIPTION {getSortIcon('subscription_plan')}
-                </th>
                 <th onClick={() => handleSort('detection_count')} className="um-sortable">
                   DETECTIONS {getSortIcon('detection_count')}
                 </th>
@@ -881,36 +862,6 @@ const UserManagement = () => {
                       <span className="um-status-dot"></span>
                       {user.is_active ? 'Active' : 'Disabled'}
                     </span>
-                  </td>
-                  <td>
-                    <select 
-                      value={user.subscription_plan} 
-                      onChange={(e) => handleSubscriptionChange(user.id, e.target.value)}
-                      className="um-inline-select"
-                      style={{
-                        background: user.subscription_plan === 'enterprise' 
-                          ? 'rgba(245, 158, 11, 0.12)' 
-                          : user.subscription_plan === 'pro' || user.subscription_plan === 'premium'
-                          ? 'rgba(139, 92, 246, 0.12)'
-                          : 'rgba(107, 114, 128, 0.12)',
-                        color: user.subscription_plan === 'enterprise' 
-                          ? '#F59E0B' 
-                          : user.subscription_plan === 'pro' || user.subscription_plan === 'premium'
-                          ? '#8B5CF6'
-                          : '#6B7280',
-                        border: user.subscription_plan === 'enterprise' 
-                          ? '1px solid rgba(245, 158, 11, 0.2)' 
-                          : user.subscription_plan === 'pro' || user.subscription_plan === 'premium'
-                          ? '1px solid rgba(139, 92, 246, 0.2)'
-                          : '1px solid rgba(107, 114, 128, 0.2)'
-                      }}
-                    >
-                      <option value="free">Free</option>
-                      <option value="basic">Basic</option>
-                      <option value="pro">Pro</option>
-                      <option value="premium">Premium</option>
-                      <option value="enterprise">Enterprise</option>
-                    </select>
                   </td>
                   <td className="um-detections">{(user.detection_count || 0).toLocaleString()}</td>
                   <td className="um-last-active" title={formatFullDateTime(user.last_active)}>
@@ -1046,12 +997,6 @@ const UserManagement = () => {
 
                 <div className="um-card-info">
                   <div className="um-card-info-item">
-                    <span className="um-card-label">Subscription</span>
-                    <span className={`um-badge um-badge-${user.subscription_plan}`}>
-                      {user.subscription_plan?.charAt(0).toUpperCase() + user.subscription_plan?.slice(1)}
-                    </span>
-                  </div>
-                  <div className="um-card-info-item">
                     <span className="um-card-label">Detections</span>
                     <span className="um-card-value">{(user.detection_count || 0).toLocaleString()}</span>
                   </div>
@@ -1135,9 +1080,6 @@ const UserManagement = () => {
                       <span className="um-status-dot"></span>
                       {selectedUser.is_active ? 'Active' : 'Disabled'}
                     </span>
-                    <span className={`um-badge um-badge-${selectedUser.subscription_plan}`}>
-                      {selectedUser.subscription_plan?.charAt(0).toUpperCase() + selectedUser.subscription_plan?.slice(1)}
-                    </span>
                   </div>
                 </div>
               </div>
@@ -1158,10 +1100,6 @@ const UserManagement = () => {
                 <div className="um-detail-item">
                   <span className="um-detail-label">Total Detections</span>
                   <span className="um-detail-value">{(selectedUser.detection_count || 0).toLocaleString()}</span>
-                </div>
-                <div className="um-detail-item">
-                  <span className="um-detail-label">Subscription</span>
-                  <span className="um-detail-value">{selectedUser.subscription_plan}</span>
                 </div>
                 <div className="um-detail-item">
                   <span className="um-detail-label">Role</span>
@@ -1321,21 +1259,6 @@ const UserManagement = () => {
                     >
                       <option value="user">User</option>
                       <option value="admin">Admin</option>
-                    </select>
-                  </div>
-
-                  <div className="um-form-group">
-                    <label className="um-form-label">Subscription Plan</label>
-                    <select
-                      className="um-form-input"
-                      value={newUserData.subscription_plan}
-                      onChange={(e) => setNewUserData({ ...newUserData, subscription_plan: e.target.value })}
-                    >
-                      <option value="free">Free</option>
-                      <option value="basic">Basic</option>
-                      <option value="pro">Pro</option>
-                      <option value="premium">Premium</option>
-                      <option value="enterprise">Enterprise</option>
                     </select>
                   </div>
                 </div>

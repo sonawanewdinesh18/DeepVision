@@ -110,18 +110,6 @@ const Dashboard = ({ setActiveView }) => {
       trend: stats?.total_users_change >= 0 ? 'up' : 'down' 
     },
     { 
-      label: 'Premium Subscribers', 
-      value: stats?.premium_users?.toLocaleString() || '0', 
-      change: `${stats?.premium_change >= 0 ? '+' : ''}${stats?.premium_change || 0}%`, 
-      trend: stats?.premium_change >= 0 ? 'up' : 'down' 
-    },
-    { 
-      label: 'Monthly Revenue', 
-      value: `₹${stats?.monthly_revenue?.toLocaleString() || '0'}`, 
-      change: `${stats?.revenue_change >= 0 ? '+' : ''}${stats?.revenue_change || 0}%`, 
-      trend: stats?.revenue_change >= 0 ? 'up' : 'down' 
-    },
-    { 
       label: 'Avg Response Time', 
       value: `${stats?.avg_response_time || '0'}ms`, 
       change: `${stats?.response_time_change >= 0 ? '+' : ''}${stats?.response_time_change || 0}%`, 

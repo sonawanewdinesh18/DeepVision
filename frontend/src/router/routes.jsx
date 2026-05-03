@@ -16,8 +16,6 @@ const SignIn          = lazy(() => import('@/pages/SignIn'));
 const SignUp          = lazy(() => import('@/pages/SignUp'));
 const ForgotPassword  = lazy(() => import('@/pages/ForgotPassword'));
 const ResetPassword   = lazy(() => import('@/pages/ResetPassword'));
-const PricingPage     = lazy(() => import('@/pages/PricingPage'));
-const Payment         = lazy(() => import('@/pages/Payment'));
 const UserDashboard   = lazy(() => import('@/pages/UserDashboard'));
 const AdminDashboard  = lazy(() => import('@/pages/AdminDashboard'));
 
@@ -29,13 +27,9 @@ export default function AppRoutes() {
 
         {/* ── Public / unauthenticated ──────────────────────── */}
         <Route path="/"         element={<LandingPage />} />
-        <Route path="/pricing"  element={<PricingPage />} />
 
         {/* Reset password — accessible to all (session established via email link) */}
         <Route path="/reset-password" element={<ResetPassword />} />
-
-        {/* Payment — public so unauthenticated users reach it after signin redirect */}
-        <Route path="/payment" element={<Payment />} />
 
         {/* ── Auth routes — redirect away if already logged in ── */}
         <Route element={<PublicRoute />}>

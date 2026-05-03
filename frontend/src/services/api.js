@@ -148,51 +148,7 @@ export const userApi = {
   getAnalyticsChart: (days = 7) =>
     api.get('/api/v1/user/analytics/chart', { params: { days } }),
 
-  // ═══ Subscription ═══
-  /**
-   * Get current subscription details.
-   * @returns {Promise<Subscription>}
-   */
-  getSubscription: () =>
-    api.get('/api/v1/user/subscription'),
-
-  /**
-   * Get available subscription plans.
-   * @returns {Promise<SubscriptionPlan[]>}
-   */
-  getSubscriptionPlans: () =>
-    api.get('/api/v1/user/subscription/plans'),
-
-  /**
-   * Upgrade subscription.
-   * @param {string} planId - Plan ID to upgrade to
-   * @param {string} paymentMethod - Payment method (default: 'card')
-   */
-  upgradeSubscription: (planId, paymentMethod = 'card') =>
-    api.post('/api/v1/user/subscription/upgrade', { plan_id: planId, payment_method: paymentMethod }),
-
-  /**
-   * Cancel subscription (at period end).
-   */
-  cancelSubscription: () =>
-    api.post('/api/v1/user/subscription/cancel'),
-
-  // ═══ Payments ═══
-  /**
-   * Get payment history.
-   * @param {{ page?: number, limit?: number }} params
-   * @returns {Promise<PaymentHistory>}
-   */
-  getPayments: (params = {}) =>
-    api.get('/api/v1/user/payments', { params }),
-
-  /**
-   * Get payment details by ID.
-   * @param {string} paymentId
-   * @returns {Promise<PaymentDetails>}
-   */
-  getPaymentDetails: (paymentId) =>
-    api.get(`/api/v1/user/payments/${paymentId}`),
+  // Subscription and payment API methods removed
 
   // ═══ Feedback ═══
   /**
@@ -351,28 +307,6 @@ export const adminApi = {
   deleteFeedback: (feedbackId) =>
     api.delete(`/api/v1/admin/feedback/${feedbackId}`),
 
-  // Subscription Management
-  getSubscriptions: () =>
-    api.get('/api/v1/admin/subscriptions'),
-
-  updateSubscription: (userId, subscriptionPlan) =>
-    api.put(`/api/v1/admin/subscriptions/${userId}`, null, {
-      params: { subscription_plan: subscriptionPlan }
-    }),
-
-  // Pricing Plans Management
-  getPricingPlans: (includeInactive = false) =>
-    api.get('/api/v1/admin/pricing-plans', {
-      params: { include_inactive: includeInactive }
-    }),
-
-  createPricingPlan: (data) =>
-    api.post('/api/v1/admin/pricing-plans', null, { params: data }),
-
-  updatePricingPlan: (planId, data) =>
-    api.put(`/api/v1/admin/pricing-plans/${planId}`, null, { params: data }),
-
-  deletePricingPlan: (planId) =>
-    api.delete(`/api/v1/admin/pricing-plans/${planId}`),
+  // Subscription and pricing management removed
 };
 

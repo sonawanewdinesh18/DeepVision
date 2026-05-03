@@ -11,7 +11,6 @@ import {
   Dashboard,
   UserManagement,
   ModelManagement,
-  SubscriptionManagement,
   Feedback,
 } from '@/components/admin';
 
@@ -19,7 +18,6 @@ const VIEW_MAP = {
   dashboard:     Dashboard,
   users:         UserManagement,
   models:        ModelManagement,
-  subscriptions: SubscriptionManagement,
   feedback:      Feedback,
 };
 

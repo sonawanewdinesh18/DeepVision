@@ -189,7 +189,7 @@ async def get_all_users(
         
         # Get users with updated_at field
         response = supabase.table("profiles")\
-            .select("id, email, full_name, role, subscription_plan, is_active, created_at, updated_at")\
+            .select("id, email, full_name, role, is_active, created_at, updated_at")\
             .range(offset, offset + limit - 1)\
             .execute()
         
@@ -221,7 +221,6 @@ async def get_all_users(
                 "email": profile["email"],
                 "full_name": profile.get("full_name", ""),
                 "role": profile.get("role", "user"),
-                "subscription_plan": profile.get("subscription_plan", "free"),
                 "is_active": profile.get("is_active", True),
                 "created_at": profile["created_at"],
                 "last_active": last_active,
@@ -257,7 +256,6 @@ async def create_user(
     password: str,
     full_name: Optional[str] = None,
     role: str = "user",
-    subscription_plan: str = "free",
     supabase: Client = Depends(get_supabase),
     admin: UserPublic = Depends(get_current_admin_user)
 ):
@@ -290,10 +288,9 @@ async def create_user(
         
         user_id = auth_response.user.id
         
-        # Update profile with role and subscription
+        # Update profile with role
         profile_data = {
             "role": role,
-            "subscription_plan": subscription_plan,
             "full_name": full_name or "New User"
         }
         
@@ -322,7 +319,6 @@ async def update_user(
     user_id: str,
     full_name: Optional[str] = None,
     role: Optional[str] = None,
-    subscription_plan: Optional[str] = None,
     is_active: Optional[bool] = None,
     supabase: Client = Depends(get_supabase),
     admin: UserPublic = Depends(get_current_admin_user)
@@ -334,8 +330,6 @@ async def update_user(
             update_data["full_name"] = full_name
         if role is not None:
             update_data["role"] = role
-        if subscription_plan is not None:
-            update_data["subscription_plan"] = subscription_plan
         if is_active is not None:
             update_data["is_active"] = is_active
         
@@ -699,249 +693,4 @@ async def delete_feedback(
         )
 
 
-# ==================== SUBSCRIPTION MANAGEMENT ====================
-
-@router.get("/subscriptions")
-async def get_subscriptions(
-    supabase: Client = Depends(get_supabase),
-    admin: UserPublic = Depends(get_current_admin_user)
-):
-    """Get subscription statistics and user breakdown."""
-    try:
-        # Get all users with their subscription plans
-        response = supabase.table("profiles").select("id, email, full_name, subscription_plan, created_at").execute()
-        
-        # Count by plan
-        plan_counts = {"free": 0, "basic": 0, "premium": 0, "enterprise": 0}
-        users_by_plan = {"free": [], "basic": [], "premium": [], "enterprise": []}
-        
-        for profile in response.data:
-            plan = profile.get("subscription_plan", "free")
-            plan_counts[plan] = plan_counts.get(plan, 0) + 1
-            users_by_plan[plan].append({
-                "id": profile["id"],
-                "email": profile["email"],
-                "full_name": profile.get("full_name", ""),
-                "created_at": profile["created_at"]
-            })
-        
-        return {
-            "plan_counts": plan_counts,
-            "users_by_plan": users_by_plan,
-            "total_users": len(response.data)
-        }
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch subscriptions: {str(e)}"
-        )
-
-
-@router.put("/subscriptions/{user_id}")
-async def update_user_subscription(
-    user_id: str,
-    subscription_plan: str,
-    supabase: Client = Depends(get_supabase),
-    admin: UserPublic = Depends(get_current_admin_user)
-):
-    """Update a user's subscription plan."""
-    try:
-        valid_plans = ["free", "basic", "premium", "enterprise"]
-        if subscription_plan not in valid_plans:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid subscription plan. Must be one of: {', '.join(valid_plans)}"
-            )
-        
-        response = supabase.table("profiles")\
-            .update({"subscription_plan": subscription_plan})\
-            .eq("id", user_id)\
-            .execute()
-        
-        if not response.data:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
-        
-        return {"message": "Subscription updated successfully", "user": response.data[0]}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update subscription: {str(e)}"
-        )
-
-
-
-# ==================== PRICING PLANS MANAGEMENT ====================
-
-@router.get("/pricing-plans")
-async def get_pricing_plans(
-    include_inactive: bool = False,
-    supabase: Client = Depends(get_supabase),
-    admin: UserPublic = Depends(get_current_admin_user)
-):
-    """Get all pricing plans (admin can see inactive plans too)."""
-    try:
-        query = supabase.table("pricing_plans").select("*").order("display_order")
-        
-        if not include_inactive:
-            query = query.eq("is_active", True)
-        
-        response = query.execute()
-        
-        return {"plans": response.data}
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch pricing plans: {str(e)}"
-        )
-
-
-@router.post("/pricing-plans")
-async def create_pricing_plan(
-    name: str,
-    display_name: str,
-    description: str,
-    price: float,
-    billing_period: str = "monthly",
-    features: List[str] = [],
-    max_detections: int = 0,
-    max_storage_gb: int = 0,
-    priority_support: bool = False,
-    api_access: bool = False,
-    custom_models: bool = False,
-    is_active: bool = True,
-    display_order: int = 0,
-    supabase: Client = Depends(get_supabase),
-    admin: UserPublic = Depends(get_current_admin_user)
-):
-    """Create a new pricing plan."""
-    try:
-        plan_data = {
-            "name": name.lower().replace(" ", "_"),
-            "display_name": display_name,
-            "description": description,
-            "price": price,
-            "billing_period": billing_period,
-            "features": features,
-            "max_detections": max_detections,
-            "max_storage_gb": max_storage_gb,
-            "priority_support": priority_support,
-            "api_access": api_access,
-            "custom_models": custom_models,
-            "is_active": is_active,
-            "display_order": display_order
-        }
-        
-        response = supabase.table("pricing_plans").insert(plan_data).execute()
-        
-        return {"message": "Pricing plan created successfully", "plan": response.data[0]}
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create pricing plan: {str(e)}"
-        )
-
-
-@router.put("/pricing-plans/{plan_id}")
-async def update_pricing_plan(
-    plan_id: str,
-    display_name: Optional[str] = None,
-    description: Optional[str] = None,
-    price: Optional[float] = None,
-    billing_period: Optional[str] = None,
-    features: Optional[List[str]] = None,
-    max_detections: Optional[int] = None,
-    max_storage_gb: Optional[int] = None,
-    priority_support: Optional[bool] = None,
-    api_access: Optional[bool] = None,
-    custom_models: Optional[bool] = None,
-    is_active: Optional[bool] = None,
-    display_order: Optional[int] = None,
-    supabase: Client = Depends(get_supabase),
-    admin: UserPublic = Depends(get_current_admin_user)
-):
-    """Update a pricing plan."""
-    try:
-        update_data = {}
-        
-        if display_name is not None:
-            update_data["display_name"] = display_name
-        if description is not None:
-            update_data["description"] = description
-        if price is not None:
-            update_data["price"] = price
-        if billing_period is not None:
-            update_data["billing_period"] = billing_period
-        if features is not None:
-            update_data["features"] = features
-        if max_detections is not None:
-            update_data["max_detections"] = max_detections
-        if max_storage_gb is not None:
-            update_data["max_storage_gb"] = max_storage_gb
-        if priority_support is not None:
-            update_data["priority_support"] = priority_support
-        if api_access is not None:
-            update_data["api_access"] = api_access
-        if custom_models is not None:
-            update_data["custom_models"] = custom_models
-        if is_active is not None:
-            update_data["is_active"] = is_active
-        if display_order is not None:
-            update_data["display_order"] = display_order
-        
-        if not update_data:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No fields to update"
-            )
-        
-        response = supabase.table("pricing_plans").update(update_data).eq("id", plan_id).execute()
-        
-        if not response.data:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Pricing plan not found"
-            )
-        
-        return {"message": "Pricing plan updated successfully", "plan": response.data[0]}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update pricing plan: {str(e)}"
-        )
-
-
-@router.delete("/pricing-plans/{plan_id}")
-async def delete_pricing_plan(
-    plan_id: str,
-    supabase: Client = Depends(get_supabase),
-    admin: UserPublic = Depends(get_current_admin_user)
-):
-    """Delete a pricing plan (or just deactivate it)."""
-    try:
-        # Instead of deleting, we deactivate to preserve data integrity
-        response = supabase.table("pricing_plans")\
-            .update({"is_active": False})\
-            .eq("id", plan_id)\
-            .execute()
-        
-        if not response.data:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Pricing plan not found"
-            )
-        
-        return {"message": "Pricing plan deactivated successfully"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete pricing plan: {str(e)}"
-        )
+# Subscription and payment management endpoints removed

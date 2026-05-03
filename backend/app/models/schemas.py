@@ -24,15 +24,7 @@ class UserRole(str, Enum):
     user = "user"
     admin = "admin"
 
-class SubscriptionPlan(str, Enum):
-    free = "free"
-    pro = "pro"
-    enterprise = "enterprise"
-
-class SubscriptionStatus(str, Enum):
-    active = "active"
-    inactive = "inactive"
-    cancelled = "cancelled"
+# Subscription and payment enums removed
 
 class FeedbackStatus(str, Enum):
     pending = "pending"
@@ -48,7 +40,6 @@ class UserPublic(BaseModel):
     email: str
     full_name: Optional[str] = None
     role: str = "user"
-    subscription_plan: str = "free"
     avatar_url: Optional[str] = None
     created_at: Optional[datetime] = None
 
@@ -146,8 +137,6 @@ class AdminUserResponse(BaseModel):
     email: str
     full_name: Optional[str] = None
     role: UserRole
-    subscription_plan: SubscriptionPlan
-    subscription_status: SubscriptionStatus
     created_at: datetime
     total_detections: int = 0
 
@@ -155,8 +144,6 @@ class AdminUserResponse(BaseModel):
 class AdminUserUpdate(BaseModel):
     """Admin user update request."""
     role: Optional[UserRole] = None
-    subscription_plan: Optional[SubscriptionPlan] = None
-    subscription_status: Optional[SubscriptionStatus] = None
 
 
 class SystemAnalytics(BaseModel):
@@ -244,71 +231,7 @@ class ChartData(BaseModel):
     deepfake: list[int]
 
 
-# ── Subscription ─────────────────────────────────────────────
-
-class SubscriptionPlanResponse(BaseModel):
-    """Subscription plan details."""
-    id: str
-    name: str
-    price: float
-    currency: str = "INR"
-    interval: str
-    features: list[str]
-    max_detections: Optional[int] = None
-    is_active: bool = True
-    is_current: bool = False
-
-
-class UserSubscriptionResponse(BaseModel):
-    """User's current subscription."""
-    plan: str
-    status: str
-    current_period_start: Optional[datetime] = None
-    current_period_end: Optional[datetime] = None
-    cancel_at_period_end: bool = False
-    detections_used: int = 0
-    detections_limit: Optional[int] = None
-
-
-class SubscriptionUpgradeRequest(BaseModel):
-    """Subscription upgrade request."""
-    plan_id: str
-    payment_method: str = "card"
-
-
-# ── Payment ──────────────────────────────────────────────────
-
-class PaymentHistoryItem(BaseModel):
-    """Payment history item."""
-    id: str
-    amount: float
-    currency: str = "INR"
-    status: str
-    payment_method: Optional[str] = None
-    transaction_id: Optional[str] = None
-    subscription_plan: Optional[str] = None
-    created_at: datetime
-
-
-class PaymentHistoryResponse(BaseModel):
-    """Paginated payment history."""
-    items: list[PaymentHistoryItem]
-    total: int
-    page: int
-    limit: int
-
-
-class PaymentDetails(BaseModel):
-    """Detailed payment information."""
-    id: str
-    amount: float
-    currency: str = "INR"
-    status: str
-    payment_method: Optional[str] = None
-    transaction_id: Optional[str] = None
-    subscription_plan: Optional[str] = None
-    invoice_url: Optional[str] = None
-    created_at: datetime
+# Subscription and payment schemas removed
 
 
 # ── Notifications ────────────────────────────────────────────

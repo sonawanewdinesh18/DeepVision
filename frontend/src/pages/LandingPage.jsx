@@ -125,20 +125,7 @@ const STATS = [
     ['150+', 'Enterprise Clients'],
 ];
 
-const PRICING = [
-    {
-        name: 'Free', price: '₹0', period: '/mo', highlight: false,
-        perks: ['50 detections/month', 'Image & video support', 'Basic confidence score', 'Community support'],
-    },
-    {
-        name: 'Pro', price: '₹999', period: '/mo', highlight: true,
-        perks: ['Unlimited detections', 'Priority AI processing', 'Full analytics dashboard', 'Detection history & export', 'Email support'],
-    },
-    {
-        name: 'Enterprise', price: 'Custom', period: '', highlight: false,
-        perks: ['Unlimited + API access', 'Custom model fine-tuning', 'On-premise deployment', 'SLA guarantee', 'Dedicated account manager'],
-    },
-];
+
 
 /* ─── Helper: animated background orb ───────────────────────── */
 function Orb({ style, x, y, scale, duration = 10 }) {
@@ -838,142 +825,6 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* ═══ PRICING ═════════════════════════════════════════════ */}
-            <section id="pricing" style={{ padding: 'clamp(64px,10vw,120px) 24px', position: 'relative', overflow: 'hidden', background: 'var(--bg-base)' }}>
-                {/* bg grid */}
-                <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(circle,var(--border-color) 1px,transparent 1px)', backgroundSize:'44px 44px', opacity:0.45, pointerEvents:'none' }} />
-                <Orb duration={16} style={{ width:800, height:800, top:-300, left:'50%', transform:'translateX(-50%)', opacity:0.12, background:'radial-gradient(circle,rgba(108,63,245,0.9) 0%,transparent 70%)' }} />
-
-                <div style={{ maxWidth:1160, margin:'0 auto', position:'relative', zIndex:1 }}>
-
-                    {/* Header */}
-                    <motion.div {...fadeUp()} style={{ textAlign:'center', marginBottom:72 }}>
-                        <span className="badge badge-primary" style={{ marginBottom:18, display:'inline-flex' }}>Pricing</span>
-                        <h2 style={{ fontSize:'clamp(2rem,4.5vw,3.2rem)', fontWeight:900, letterSpacing:'-0.03em', marginBottom:16, color:'var(--text-primary)', lineHeight:1.1 }}>
-                            One tool. <span className="text-gradient">Three plans.</span>
-                        </h2>
-                        <p style={{ color:'var(--text-secondary)', fontSize:'1.05rem', maxWidth:500, margin:'0 auto 28px', lineHeight:1.7 }}>
-                            Start free, no card needed. Upgrade when you're ready for more power.
-                        </p>
-                        <button onClick={() => navigate('/pricing')}
-                            style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'9px 22px', borderRadius:999, border:'1px solid var(--border-card)', background:'var(--bg-card)', color:'var(--color-primary-light)', fontSize:'0.82rem', fontWeight:700, cursor:'pointer', transition:'all 0.2s' }}
-                            onMouseEnter={e=>e.currentTarget.style.borderColor='var(--color-primary-light)'}
-                            onMouseLeave={e=>e.currentTarget.style.borderColor='var(--border-card)'}
-                        >
-                            See full plan comparison <ArrowRight size={13}/>
-                        </button>
-                    </motion.div>
-
-                    {/* Cards */}
-                    <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:20, alignItems:'center' }}>
-                        {PRICING.map(({ name, price, period, highlight, perks }, i) => {
-                            const accent = i===0 ? '#63B3ED' : i===2 ? '#10b981' : null;
-                            return (
-                                <motion.div key={name}
-                                    initial={{ opacity:0, y:60 }}
-                                    whileInView={{ opacity:1, y:0 }}
-                                    viewport={{ once:true, amount:0.15 }}
-                                    transition={{ duration:0.65, delay:i*0.14, ease:[0.22,1,0.36,1] }}
-                                    whileHover={{ y: highlight ? -4 : -6, transition:{ duration:0.2 } }}
-                                    style={{
-                                        position:'relative', borderRadius:28, overflow:'hidden',
-                                        display:'flex', flexDirection:'column',
-                                        background: highlight ? 'linear-gradient(155deg,#4c1fd4 0%,#6d28d9 45%,#8B5CF6 100%)' : 'var(--bg-card)',
-                                        border: highlight ? '1px solid rgba(139,92,246,0.6)' : '1px solid var(--border-card)',
-                                        boxShadow: highlight ? '0 40px 100px rgba(108,63,245,0.45), 0 0 0 1px rgba(139,92,246,0.3)' : '0 8px 40px rgba(0,0,0,0.08)',
-                                        transform: highlight ? 'scale(1.05)' : 'scale(1)',
-                                        zIndex: highlight ? 2 : 1,
-                                    }}
-                                >
-                                    {/* top accent */}
-                                    {!highlight && <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:`linear-gradient(90deg,transparent,${accent},transparent)` }} />}
-
-                                    {/* highlight glows */}
-                                    {highlight && <>
-                                        <div style={{ position:'absolute', top:-100, right:-100, width:300, height:300, borderRadius:'50%', background:'radial-gradient(circle,rgba(255,255,255,0.13),transparent 70%)', pointerEvents:'none' }} />
-                                        <div style={{ position:'absolute', bottom:-80, left:-80, width:240, height:240, borderRadius:'50%', background:'radial-gradient(circle,rgba(255,255,255,0.07),transparent 70%)', pointerEvents:'none' }} />
-                                    </>}
-
-                                    {/* Popular badge */}
-                                    {highlight && (
-                                        <div style={{ position:'absolute', top:22, right:22, background:'rgba(255,255,255,0.2)', color:'#fff', fontSize:'0.58rem', fontWeight:900, padding:'5px 13px', borderRadius:999, letterSpacing:'0.12em', textTransform:'uppercase', border:'1px solid rgba(255,255,255,0.35)', backdropFilter:'blur(10px)' }}>
-                                            ✦ MOST POPULAR
-                                        </div>
-                                    )}
-
-                                    <div style={{ padding: highlight ? '40px 32px 36px' : '32px 28px 28px', display:'flex', flexDirection:'column', flex:1 }}>
-
-                                        {/* Plan label */}
-                                        <div style={{ fontSize:'0.68rem', fontWeight:900, letterSpacing:'0.14em', textTransform:'uppercase', color: highlight ? 'rgba(255,255,255,0.55)' : accent || 'var(--text-muted)', marginBottom:14 }}>{name}</div>
-
-                                        {/* Price block */}
-                                        <div style={{ marginBottom:8 }}>
-                                            <div style={{ display:'flex', alignItems:'flex-end', gap:5, lineHeight:1 }}>
-                                                <span style={{ fontSize: highlight ? '3.6rem' : '3rem', fontWeight:900, letterSpacing:'-0.05em', color: highlight ? '#fff' : 'var(--text-primary)', lineHeight:1 }}>{price}</span>
-                                                {period && <span style={{ fontSize:'0.9rem', color: highlight ? 'rgba(255,255,255,0.5)' : 'var(--text-muted)', marginBottom:8 }}>{period}</span>}
-                                            </div>
-                                        </div>
-
-                                        <p style={{ fontSize:'0.8rem', color: highlight ? 'rgba(255,255,255,0.6)' : 'var(--text-muted)', marginBottom:24, lineHeight:1.5 }}>
-                                            {i===0 ? 'Perfect for getting started' : i===1 ? 'Best for individuals & teams' : 'For organizations at scale'}
-                                        </p>
-
-                                        <div style={{ height:1, background: highlight ? 'rgba(255,255,255,0.15)' : 'var(--border-color)', marginBottom:24 }} />
-
-                                        {/* Perks */}
-                                        <ul style={{ listStyle:'none', display:'flex', flexDirection:'column', gap:13, flex:1, marginBottom:32 }}>
-                                            {perks.map(p => (
-                                                <li key={p} style={{ display:'flex', alignItems:'flex-start', gap:10, fontSize:'0.86rem', color: highlight ? 'rgba(255,255,255,0.88)' : 'var(--text-secondary)' }}>
-                                                    <div style={{ width:20, height:20, borderRadius:'50%', flexShrink:0, marginTop:1, display:'flex', alignItems:'center', justifyContent:'center',
-                                                        background: highlight ? 'rgba(255,255,255,0.18)' : `${accent || '#8B5CF6'}18`,
-                                                        border: highlight ? '1px solid rgba(255,255,255,0.28)' : `1px solid ${accent || '#8B5CF6'}35`,
-                                                    }}>
-                                                        <CheckCircle size={11} color={highlight ? '#fff' : accent || '#8B5CF6'} strokeWidth={3}/>
-                                                    </div>
-                                                    {p}
-                                                </li>
-                                            ))}
-                                        </ul>
-
-                                        {/* CTA */}
-                                        <button
-                                            onClick={() => {
-                                            if (name === 'Enterprise') { navigate('/signin'); return; }
-                                            sessionStorage.setItem('pendingRedirect', '/pricing');
-                                            navigate('/signin', { state: { redirectTo: '/pricing' } });
-                                        }}
-                                            style={{
-                                                width:'100%', padding:'15px 20px', borderRadius:999, border:'none',
-                                                fontWeight:800, fontSize:'0.93rem', cursor:'pointer',
-                                                display:'flex', alignItems:'center', justifyContent:'center', gap:8,
-                                                transition:'all 0.22s',
-                                                background: highlight ? '#fff' : `linear-gradient(135deg,${accent ? accent+','+accent+'cc' : '#6C3FF5,#8B5CF6'})`,
-                                                color: highlight ? '#6C3FF5' : '#fff',
-                                                boxShadow: highlight ? '0 8px 28px rgba(255,255,255,0.28)' : `0 6px 24px ${accent ? accent+'55' : 'rgba(108,63,245,0.35)'}`,
-                                                letterSpacing:'0.01em',
-                                            }}
-                                            onMouseEnter={e=>{ e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow=highlight?'0 12px 36px rgba(255,255,255,0.38)':'0 12px 36px rgba(108,63,245,0.5)'; }}
-                                            onMouseLeave={e=>{ e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow=highlight?'0 8px 28px rgba(255,255,255,0.28)':'0 6px 24px rgba(108,63,245,0.35)'; }}
-                                        >
-                                            {name==='Enterprise' ? 'Contact Sales' : name==='Free' ? 'Get Started Free' : 'Choose Plan'}
-                                            <ArrowRight size={15}/>
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            );
-                        })}
-                    </div>
-
-                    {/* Trust strip */}
-                    <motion.div {...fadeUp(0.3)} style={{ marginTop:48, display:'flex', alignItems:'center', justifyContent:'center', gap:32, flexWrap:'wrap' }}>
-                        {[['🔒','SSL Encrypted'],['✓','Cancel Anytime'],['🎁','7-day Pro Trial'],['📞','24/7 Support']].map(([ic,lb])=>(
-                            <div key={lb} style={{ display:'flex', alignItems:'center', gap:7, fontSize:'0.8rem', color:'var(--text-muted)', fontWeight:600 }}>
-                                <span style={{ fontSize:'0.95rem' }}>{ic}</span> {lb}
-                            </div>
-                        ))}
-                    </motion.div>
-                </div>
-            </section>
 
             {/* ═══ CONTACT ══════════════════════════════════════════════ */}
             <section id="contact" style={{ padding:'100px 24px 120px', background:'var(--bg-base)', position:'relative', overflow:'hidden' }}>
@@ -1121,7 +972,7 @@ export default function LandingPage() {
                                                 onFocus={e=>{ e.target.style.borderColor='#6C3FF5'; e.target.style.boxShadow='0 0 0 3px rgba(108,63,245,0.12)'; }}
                                                 onBlur={e=>{ e.target.style.borderColor='var(--border-card)'; e.target.style.boxShadow='none'; }}>
                                                 <option value="" disabled>Select a topic…</option>
-                                                {['General Inquiry','Technical Support','Billing & Payments','Enterprise / Sales','Bug Report','Feature Request','Other'].map(o=>(
+                                                {['General Inquiry','Technical Support','Enterprise / Sales','Bug Report','Feature Request','Other'].map(o=>(
                                                     <option key={o} value={o}>{o}</option>
                                                 ))}
                                             </select>
@@ -1269,7 +1120,6 @@ export default function LandingPage() {
                                 ['Home','/', '🏠'],
                                 ['Features','#features', '✨'],
                                 ['About Us','#about', '👥'],
-                                ['Pricing','/pricing', '💎'],
                                 ['Contact Us','#contact', '📧']
                             ].map(([l,h,emoji])=>(
                                 <a key={l} href={h} style={{ color:'var(--text-secondary)', fontSize:'0.88rem', textDecoration:'none', transition:'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', fontWeight:500, display:'flex', alignItems:'center', gap:10, padding:'6px 10px', borderRadius:8, marginLeft:'-10px' }}
@@ -1363,38 +1213,6 @@ export default function LandingPage() {
           padding: 32px; transition: border-color 0.25s;
         }
         .step-card:hover { border-color: var(--color-primary); }
-
-        .pricing-card {
-          padding: 36px 32px;
-          position: relative; overflow: hidden;
-          transition: transform 0.25s, box-shadow 0.25s;
-        }
-        .pricing-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
-
-        .pricing-highlight {
-          background: linear-gradient(145deg, var(--color-primary), #8B5CF6) !important;
-          border-color: transparent !important;
-          color: white;
-        }
-
-        .popular-badge {
-          position: absolute; top: 16px; right: 16px;
-          background: rgba(255,255,255,0.2);
-          color: white; font-size: 0.72rem; font-weight: 700;
-          padding: 4px 12px; border-radius: var(--radius-full);
-          letter-spacing: 0.04em; text-transform: uppercase;
-        }
-
-        .btn-white {
-          background: white !important;
-          color: var(--color-primary) !important;
-          font-weight: 700;
-          transition: all 0.2s;
-        }
-        .btn-white:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 24px rgba(0,0,0,0.15);
-        }
 
         @keyframes heartbeat {
           0%, 100% { transform: scale(1); }

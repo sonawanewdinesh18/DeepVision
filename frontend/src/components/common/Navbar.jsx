@@ -13,7 +13,6 @@ const NAV_LINKS = [
     { label: 'Home', href: '#home', emoji: '🏠' },
     { label: 'Features', href: '#features', emoji: '✨' },
     { label: 'How it Works', href: '#howitworks', emoji: '⚙️' },
-    { label: 'Pricing', href: '#pricing', emoji: '💎' },
     { label: 'Contact', href: '#contact', emoji: '📧' },
     { label: 'About Us', href: '#about', emoji: '👥' },
 ];

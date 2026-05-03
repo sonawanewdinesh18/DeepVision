@@ -108,7 +108,7 @@ export const AuthProvider = ({ children }) => {
         // Store pending redirect before OAuth redirects away
         const pending = sessionStorage.getItem('pendingRedirect');
         const redirectUrl = pending
-            ? `${window.location.origin}/pricing`
+            ? `${window.location.origin}/user-dashboard`
             : `${window.location.origin}/user-dashboard`;
         return await supabase.auth.signInWithOAuth({
             provider: 'google',

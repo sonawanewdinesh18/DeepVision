@@ -71,7 +71,6 @@ async def get_current_user(
         email=email,
         full_name=profile.get("full_name"),
         role=profile.get("role", "user"),
-        subscription_plan=profile.get("subscription_plan", "free"),
     )
 
 

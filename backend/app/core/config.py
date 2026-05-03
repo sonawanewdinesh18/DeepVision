@@ -30,8 +30,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = ""
     dB_password: str = ""
 
-    # ── Payment ──────────────────────────────────────────────
-    STRIPE_SECRET_KEY: str = ""
+    # Payment configuration removed
 
     # ── AI Model ─────────────────────────────────────────────
     MODEL_PATH: str = "./models/deepvision_v1.pth"

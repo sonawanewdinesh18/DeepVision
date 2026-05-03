@@ -72,7 +72,7 @@ export default function SignIn() {
         const adminEmail    = import.meta.env.VITE_ADMIN_EMAIL || 'admin@deepvision.app';
         const userIsAdmin   = signedInEmail.toLowerCase().trim() === adminEmail.toLowerCase().trim();
 
-        // Check for pending redirect (set by pricing page before navigating here)
+        // Check for pending redirect
         const redirectTo = location.state?.redirectTo;
         const pending    = sessionStorage.getItem('pendingRedirect');
 

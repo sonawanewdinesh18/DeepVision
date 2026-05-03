@@ -57,11 +57,6 @@ const Sidebar = ({ isOpen, activeView, setActiveView }) => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Get user's name
-  const userName = user?.user_metadata?.full_name || 
-                   user?.email?.split('@')[0] || 
-                   'User';
-
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -254,17 +249,6 @@ const Sidebar = ({ isOpen, activeView, setActiveView }) => {
                 {historyItems.length === 0 ? 'No detections yet' : 'All items are hidden'}
               </div>
             )}
-          </div>
-        </div>
-
-        {/* ── User profile at bottom (fixed) ── */}
-        <div className="sb-user-profile">
-          <div className="sb-user-avatar">
-            {userName.charAt(0).toUpperCase()}
-          </div>
-          <div className="sb-user-info">
-            <div className="sb-user-name">{userName}</div>
-            <div className="sb-user-plan">Free</div>
           </div>
         </div>
 
