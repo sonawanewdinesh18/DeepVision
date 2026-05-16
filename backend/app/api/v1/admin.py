@@ -29,13 +29,22 @@ async def get_admin_stats(
         detections_response = supabase.table("detections").select("*", count="exact").execute()
         total_scans = detections_response.count or 0
         
-        # Get deepfakes detected
-        deepfakes_response = supabase.table("detections").select("*", count="exact").eq("verdict", "DEEPFAKE").execute()
+        # Get deepfakes detected (verdict is stored as "FAKE" not "DEEPFAKE")
+        deepfakes_response = supabase.table("detections").select("*", count="exact").eq("verdict", "FAKE").execute()
         deepfakes_detected = deepfakes_response.count or 0
         
         # Get active users (users who have made at least one detection)
-        active_users_response = supabase.table("profiles").select("id", count="exact").execute()
-        active_users = active_users_response.count or 0
+        active_users_response = supabase.table("detections").select("user_id").execute()
+        unique_users = len(set([d["user_id"] for d in active_users_response.data if d.get("user_id")]))
+        
+        # Get total users from profiles table
+        total_users_response = supabase.table("profiles").select("id", count="exact").execute()
+        total_users = total_users_response.count or 0
+        
+        # Calculate average response time from detections
+        detections_with_time = supabase.table("detections").select("processing_time_ms").execute()
+        processing_times = [d.get("processing_time_ms") for d in detections_with_time.data if d.get("processing_time_ms")]
+        avg_response_time = round(sum(processing_times) / len(processing_times)) if processing_times else 2300
         
         # Calculate accuracy (authentic detections / total detections)
         authentic_response = supabase.table("detections").select("*", count="exact").eq("verdict", "REAL").execute()
@@ -60,12 +69,16 @@ async def get_admin_stats(
         return {
             "total_scans": total_scans,
             "deepfakes_detected": deepfakes_detected,
-            "active_users": active_users,
+            "active_users": unique_users,
+            "total_users": total_users,
+            "avg_response_time": avg_response_time,
             "system_accuracy": round(accuracy, 1),
             "scans_change": round(scans_change, 1),
             "deepfakes_change": 0,  # Can be calculated similarly if needed
             "users_change": 0,  # Can be calculated similarly if needed
-            "accuracy_change": 0  # Can be calculated similarly if needed
+            "accuracy_change": 0,  # Can be calculated similarly if needed
+            "total_users_change": 0,
+            "response_time_change": 0
         }
     except Exception as e:
         raise HTTPException(
@@ -153,7 +166,7 @@ async def get_chart_data(
             
             if detection["verdict"] == "REAL":
                 daily_data[date]["authentic"] += 1
-            else:
+            elif detection["verdict"] == "FAKE":  # Changed from "DEEPFAKE" to "FAKE"
                 daily_data[date]["deepfake"] += 1
         
         # Convert to array format
@@ -578,6 +591,7 @@ async def get_feedback(
     page: int = 1,
     limit: int = 20,
     status_filter: Optional[str] = None,
+    verified_filter: Optional[bool] = None,
     supabase: Client = Depends(get_supabase),
     admin: UserPublic = Depends(get_current_admin_user)
 ):
@@ -589,6 +603,9 @@ async def get_feedback(
         
         if status_filter:
             query = query.eq("status", status_filter)
+        
+        if verified_filter is not None:
+            query = query.eq("admin_verified", verified_filter)
         
         response = query.order("created_at", desc=True).range(offset, offset + limit - 1).execute()
         
@@ -606,15 +623,38 @@ async def get_feedback(
                     user_name = profile.get("full_name", "Anonymous")
                     user_email = profile.get("email", "")
             
+            # Get detection details if detection_id exists
+            detection_data = None
+            if feedback.get("detection_id"):
+                detection_response = supabase.table("detections").select("*").eq("id", feedback["detection_id"]).execute()
+                if detection_response.data:
+                    detection = detection_response.data[0]
+                    detection_data = {
+                        "id": detection["id"],
+                        "file_name": detection["file_name"],
+                        "file_url": detection.get("file_url"),
+                        "file_type": detection.get("file_type"),
+                        "verdict": detection["verdict"],
+                        "confidence": detection["confidence"],
+                        "created_at": detection["created_at"]
+                    }
+            
             feedback_list.append({
                 "id": feedback["id"],
                 "user_id": user_id,
                 "user_name": user_name,
                 "user_email": user_email,
                 "detection_id": feedback.get("detection_id"),
+                "detection": detection_data,
+                "feedback_type": feedback.get("feedback_type", "general"),
+                "is_correct": feedback.get("is_correct"),
                 "rating": feedback.get("rating"),
-                "comment": feedback.get("comment", ""),
+                "subject": feedback.get("subject", ""),
+                "comment": feedback.get("message", ""),  # Database column is 'message'
                 "status": feedback.get("status", "pending"),
+                "admin_verified": feedback.get("admin_verified", False),
+                "admin_verified_at": feedback.get("admin_verified_at"),
+                "admin_notes": feedback.get("admin_notes"),
                 "created_at": feedback["created_at"]
             })
         
@@ -622,6 +662,8 @@ async def get_feedback(
         count_query = supabase.table("feedback").select("*", count="exact")
         if status_filter:
             count_query = count_query.eq("status", status_filter)
+        if verified_filter is not None:
+            count_query = count_query.eq("admin_verified", verified_filter)
         count_response = count_query.execute()
         total = count_response.count or 0
         
@@ -672,6 +714,48 @@ async def update_feedback_status(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update feedback: {str(e)}"
+        )
+
+
+@router.put("/feedback/{feedback_id}/verify")
+async def verify_feedback(
+    feedback_id: str,
+    is_correct: bool,
+    admin_notes: Optional[str] = None,
+    supabase: Client = Depends(get_supabase),
+    admin: UserPublic = Depends(get_current_admin_user)
+):
+    """Verify feedback - admin confirms if user's feedback is accurate."""
+    try:
+        # Build update data - only include fields that exist in database
+        update_data = {
+            "admin_verified": True,
+            "admin_verified_at": datetime.now().isoformat(),
+            "admin_verified_by": admin.id,
+            "is_correct": is_correct,
+            "status": "resolved"
+        }
+        
+        if admin_notes:
+            update_data["admin_notes"] = admin_notes
+        
+        response = supabase.table("feedback").update(update_data).eq("id", feedback_id).execute()
+        
+        if not response.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Feedback not found"
+            )
+        
+        return {"message": "Feedback verified successfully", "feedback": response.data[0]}
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Log the actual error for debugging
+        print(f"Error verifying feedback: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to verify feedback: {str(e)}"
         )
 
 

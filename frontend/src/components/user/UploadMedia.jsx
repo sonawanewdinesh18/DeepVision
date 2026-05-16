@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Upload, FileVideo, Image as ImageIcon, CheckCircle, X, Sparkles, Shield, Zap } from 'lucide-react';
 import { detectionApi } from '@/services/api';
 import toast from '@/utils/toast';
@@ -7,12 +7,22 @@ import './UploadMedia.css';
 const UploadMedia = ({ setActiveView }) => {
   const [dragActive, setDragActive] = useState(false);
   const [file, setFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
   const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+
+  // Cleanup preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -50,6 +60,9 @@ const UploadMedia = ({ setActiveView }) => {
       return;
     }
     
+    // Create preview URL
+    const url = URL.createObjectURL(selectedFile);
+    setPreviewUrl(url);
     setFile(selectedFile);
     setError(null);
     toast.success('File selected successfully!');
@@ -88,9 +101,9 @@ const UploadMedia = ({ setActiveView }) => {
       
       toast.success('Analysis complete!');
       
-      // Navigate to results after a brief delay
+      // Navigate to result view with the detection ID
       setTimeout(() => {
-        setActiveView('result');
+        setActiveView('result', response.data.id);
       }, 500);
       
     } catch (err) {
@@ -103,7 +116,12 @@ const UploadMedia = ({ setActiveView }) => {
   };
 
   const removeFile = () => {
+    // Revoke the preview URL to free memory
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
     setFile(null);
+    setPreviewUrl(null);
     setError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -186,12 +204,33 @@ const UploadMedia = ({ setActiveView }) => {
             </div>
           ) : (
             <div className="upload-file-preview">
+              {/* Media Preview */}
+              <div className="media-preview-container">
+                {file.type.startsWith('video') ? (
+                  <video 
+                    src={previewUrl} 
+                    controls 
+                    className="media-preview-video"
+                    preload="metadata"
+                  >
+                    Your browser does not support video preview.
+                  </video>
+                ) : (
+                  <img 
+                    src={previewUrl} 
+                    alt="Preview" 
+                    className="media-preview-image"
+                  />
+                )}
+              </div>
+
+              {/* File Info Card */}
               <div className="file-preview-card">
                 <div className="file-preview-icon">
                   {file.type.startsWith('video') ? (
-                    <FileVideo size={40} />
+                    <FileVideo size={24} />
                   ) : (
-                    <ImageIcon size={40} />
+                    <ImageIcon size={24} />
                   )}
                 </div>
                 

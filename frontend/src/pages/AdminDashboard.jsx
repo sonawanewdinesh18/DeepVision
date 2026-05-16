@@ -8,14 +8,14 @@ import { useState } from 'react';
 import {
   Sidebar,
   TopHeader,
-  Dashboard,
+  EnhancedDashboard,
   UserManagement,
   ModelManagement,
   Feedback,
 } from '@/components/admin';
 
 const VIEW_MAP = {
-  dashboard:     Dashboard,
+  dashboard:     EnhancedDashboard,
   users:         UserManagement,
   models:        ModelManagement,
   feedback:      Feedback,
@@ -25,7 +25,7 @@ export default function AdminDashboard() {
   const [activeView, setActiveView] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  const ActiveComponent = VIEW_MAP[activeView] ?? Dashboard;
+  const ActiveComponent = VIEW_MAP[activeView] ?? EnhancedDashboard;
 
   return (
     <div style={{

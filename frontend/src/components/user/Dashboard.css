@@ -266,3 +266,115 @@
   .ud-username-title { font-size: 28px; }
   .ud-stat-value { font-size: 26px; }
 }
+
+/* ── Chart Styles ── */
+.ud-chart-container {
+  flex: 1;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ud-simple-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 8px;
+  height: 220px;
+  padding: 20px 16px 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+.ud-chart-bar-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  max-width: 80px;
+}
+
+.ud-chart-bar-stack {
+  width: 100%;
+  max-width: 50px;
+  display: flex;
+  flex-direction: column-reverse;
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.ud-chart-bar-stack:hover {
+  transform: translateY(-4px);
+}
+
+.ud-chart-bar {
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+.ud-chart-bar.ud-authentic {
+  background: linear-gradient(180deg, #10B981 0%, #059669 100%);
+}
+
+.ud-chart-bar.ud-deepfake {
+  background: linear-gradient(180deg, #EF4444 0%, #DC2626 100%);
+}
+
+.ud-chart-bar.ud-empty {
+  background: var(--border-color);
+  opacity: 0.3;
+}
+
+.ud-chart-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.ud-chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  padding: 0 16px;
+}
+
+.ud-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.ud-legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+  .ud-simple-chart {
+    gap: 4px;
+    padding: 16px 8px 0;
+  }
+  
+  .ud-chart-bar-group {
+    max-width: 60px;
+  }
+  
+  .ud-chart-bar-stack {
+    max-width: 40px;
+  }
+  
+  .ud-chart-label {
+    font-size: 10px;
+  }
+}

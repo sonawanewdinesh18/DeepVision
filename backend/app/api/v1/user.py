@@ -325,11 +325,25 @@ async def submit_feedback(
     """Submit user feedback."""
     supabase = get_supabase()
     
+    # Determine feedback type based on subject
+    # Check "incorrect" FIRST before "correct" to avoid false matches
+    feedback_type = "general"
+    is_correct = None
+    
+    if "incorrect" in feedback.subject.lower():
+        feedback_type = "incorrect_result"
+        is_correct = False
+    elif "correct" in feedback.subject.lower():
+        feedback_type = "correct_result"
+        is_correct = True
+    
     response = supabase.table("feedback").insert({
         "user_id": current_user.id,
         "detection_id": feedback.detection_id,
         "subject": feedback.subject,
         "message": feedback.message,
+        "feedback_type": feedback_type,
+        "is_correct": is_correct,
         "status": "pending"
     }).execute()
     

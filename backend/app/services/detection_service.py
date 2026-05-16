@@ -15,7 +15,6 @@ from app.core.supabase_client import get_supabase
 from app.models.schemas import DetectionResult, DetectionVerdict, MediaType
 from app.ai.detector import detection_engine
 from app.ai.validators import ValidationError
-from app.ai.models import ModelLoadError, InferenceError
 
 logger = logging.getLogger(__name__)
 
@@ -82,13 +81,31 @@ class DetectionService:
             
         except ValidationError as e:
             logger.warning(f"File validation failed: {e}")
-            raise HTTPException(status_code=400, detail=f"File validation failed: {str(e)}")
-        except (ModelLoadError, InferenceError) as e:
-            logger.error(f"AI model error: {e}")
-            raise HTTPException(status_code=500, detail="AI detection service temporarily unavailable")
+            # Return user-friendly error message
+            error_detail = {
+                "message": e.message,
+                "code": e.error_code,
+                "details": e.details
+            }
+            raise HTTPException(status_code=400, detail=error_detail)
+        except RuntimeError as e:
+            logger.error(f"Detection runtime error: {e}")
+            raise HTTPException(
+                status_code=500, 
+                detail={
+                    "message": str(e),
+                    "code": "DETECTION_ERROR"
+                }
+            )
         except Exception as e:
             logger.error(f"Unexpected error during analysis: {e}")
-            raise HTTPException(status_code=500, detail="Detection analysis failed")
+            raise HTTPException(
+                status_code=500, 
+                detail={
+                    "message": "An unexpected error occurred during detection",
+                    "code": "INTERNAL_ERROR"
+                }
+            )
 
     async def analyze_and_save(self, file: UploadFile, user_id: str) -> DetectionResult:
         """
@@ -179,13 +196,30 @@ class DetectionService:
             
         except ValidationError as e:
             logger.warning(f"File validation failed for user {user_id}: {e}")
-            raise HTTPException(status_code=400, detail=f"File validation failed: {str(e)}")
-        except (ModelLoadError, InferenceError) as e:
-            logger.error(f"AI model error for user {user_id}: {e}")
-            raise HTTPException(status_code=500, detail="AI detection service temporarily unavailable")
+            error_detail = {
+                "message": e.message,
+                "code": e.error_code,
+                "details": e.details
+            }
+            raise HTTPException(status_code=400, detail=error_detail)
+        except RuntimeError as e:
+            logger.error(f"Detection runtime error for user {user_id}: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "message": str(e),
+                    "code": "DETECTION_ERROR"
+                }
+            )
         except Exception as e:
             logger.error(f"Unexpected error during analysis for user {user_id}: {e}")
-            raise HTTPException(status_code=500, detail="Detection analysis failed")
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "message": "An unexpected error occurred during detection",
+                    "code": "INTERNAL_ERROR"
+                }
+            )
 
     def get_model_status(self) -> dict:
         """Get current AI model status for admin monitoring."""

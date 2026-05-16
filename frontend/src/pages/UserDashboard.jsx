@@ -26,8 +26,15 @@ const VIEW_MAP = {
 export default function UserDashboard() {
   const [activeView, setActiveView] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [selectedDetectionId, setSelectedDetectionId] = useState(null);
 
   const ActiveComponent = VIEW_MAP[activeView] ?? Dashboard;
+
+  // Handler to switch views with optional detection ID
+  const handleViewChange = (view, detectionId = null) => {
+    setActiveView(view);
+    setSelectedDetectionId(detectionId);
+  };
 
   return (
     <div style={{
@@ -52,7 +59,8 @@ export default function UserDashboard() {
         <Sidebar
           isOpen={isSidebarOpen}
           activeView={activeView}
-          setActiveView={setActiveView}
+          setActiveView={handleViewChange}
+          selectedDetectionId={selectedDetectionId}
         />
 
         {/* Main content - Scrollable */}
@@ -65,7 +73,10 @@ export default function UserDashboard() {
           height: '100%',
         }}>
           <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-            <ActiveComponent setActiveView={setActiveView} />
+            <ActiveComponent 
+              setActiveView={handleViewChange} 
+              detectionId={selectedDetectionId}
+            />
           </div>
         </main>
       </div>
