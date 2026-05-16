@@ -14,17 +14,18 @@ const DetectionResult = ({ setActiveView, detectionId }) => {
 
   useEffect(() => {
     if (detectionId) {
-      fetchDetectionResult();
+      fetchDetectionResult(detectionId);
     } else {
       // Check if there's a recent detection
       fetchLatestDetection();
     }
   }, [detectionId]);
 
-  const fetchDetectionResult = async () => {
+  const fetchDetectionResult = async (id) => {
     try {
       setLoading(true);
-      const response = await detectionApi.getResult(detectionId);
+      const response = await detectionApi.getResult(id);
+      console.log('Detection result:', response.data);
       setResult({
         id: response.data.id,
         file: response.data.file_name,
@@ -52,13 +53,16 @@ const DetectionResult = ({ setActiveView, detectionId }) => {
       
       if (response.data.items.length > 0) {
         const latest = response.data.items[0];
+        // Fetch full details to get file URL
+        const detailResponse = await detectionApi.getResult(latest.id);
         setResult({
           id: latest.id,
           file: latest.file_name,
           type: latest.media_type,
           result: latest.verdict.toLowerCase(),
           confidence: (latest.confidence * 100).toFixed(1),
-          processingTime: '2.4s'
+          processingTime: '2.4s',
+          fileUrl: detailResponse.data.file_url
         });
       } else {
         setResult(null);
@@ -174,7 +178,6 @@ const DetectionResult = ({ setActiveView, detectionId }) => {
   }
 
   const isFake = result.result === 'fake';
-  const confidenceLabel = result.confidence > 90 ? 'High Confidence' : 'Medium Confidence';
 
   const feedbackOptions = [
     { id: 'correct',   icon: ThumbsUp,   title: 'Correct Result',   desc: 'The AI detection matched my expectation' },
@@ -234,9 +237,6 @@ const DetectionResult = ({ setActiveView, detectionId }) => {
             <span className="dr-label">Confidence Score</span>
             <div className="dr-confidence-row">
               <span className="dr-confidence-value">{result.confidence}%</span>
-              <span className={`dr-confidence-tag ${isFake ? 'conf-medium' : 'conf-safe'}`}>
-                {confidenceLabel}
-              </span>
             </div>
           </div>
 
@@ -265,67 +265,64 @@ const DetectionResult = ({ setActiveView, detectionId }) => {
             </div>
             <p className="dr-status-text">
               {isFake
-                ? 'Our AI detected signs of manipulation in this media. Review the detailed analysis for more information.'
+                ? 'Our AI detected signs of manipulation in this media.'
                 : 'No signs of manipulation detected. This media appears to be authentic.'}
             </p>
           </div>
+
+          {/* User Feedback - Integrated */}
+          <div className="dr-feedback-integrated">
+            <h3 className="dr-feedback-title">User Feedback</h3>
+            <p className="dr-feedback-subtitle">Help us improve by rating this detection result</p>
+
+            {submitted ? (
+              <div className="dr-feedback-success-inline">
+                <CheckCircle size={24} className="dr-status-icon-auth" />
+                <p>Thank you for your feedback!</p>
+              </div>
+            ) : (
+              <>
+                <p className="dr-fb-question">Was the result accurate?</p>
+                <div className="dr-feedback-options-inline">
+                  {feedbackOptions.map(({ id, icon: Icon, title, desc }) => (
+                    <button
+                      key={id}
+                      onClick={() => setSelected(id)}
+                      className={`dr-feedback-btn-inline ${selected === id ? 'dr-feedback-selected' : ''}`}
+                    >
+                      <div className="dr-fb-icon-box-inline">
+                        <Icon size={20} />
+                      </div>
+                      <div>
+                        <p className="dr-fb-title-inline">{title}</p>
+                        <p className="dr-fb-desc-inline">{desc}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <p className="dr-fb-question" style={{ marginTop: 16 }}>Comments</p>
+                <textarea
+                  rows={3}
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Share your feedback about the AI detection result..."
+                  className="dr-textarea-inline"
+                />
+
+                <button
+                  onClick={handleSubmitFeedback}
+                  disabled={!selected}
+                  className="dr-btn-submit-inline"
+                  style={{ marginTop: 12 }}
+                >
+                  Submit Feedback
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
-
-
-
-      {/* Feedback */}
-      <div className="dr-card dr-feedback-card">
-        <h2 className="dr-card-title">User Feedback</h2>
-        <p className="dr-feedback-sub">Help us improve by rating this detection result</p>
-
-        {submitted ? (
-          <div className="dr-feedback-success">
-            <CheckCircle size={44} className="dr-status-icon-auth" />
-            <p>Thank you for your feedback!</p>
-          </div>
-        ) : (
-          <>
-            <p className="dr-fb-question">Was the result accurate?</p>
-            <div className="dr-feedback-options">
-              {feedbackOptions.map(({ id, icon: Icon, title, desc }) => (
-                <button
-                  key={id}
-                  onClick={() => setSelected(id)}
-                  className={`dr-feedback-btn ${selected === id ? 'dr-feedback-selected' : ''}`}
-                >
-                  <div className="dr-fb-icon-box">
-                    <Icon size={22} />
-                  </div>
-                  <div>
-                    <p className="dr-fb-title">{title}</p>
-                    <p className="dr-fb-desc">{desc}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            <p className="dr-fb-question" style={{ marginTop: 20 }}>Comments</p>
-            <textarea
-              rows={4}
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder="Share your feedback about the AI detection result..."
-              className="dr-textarea"
-            />
-
-            <button
-              onClick={handleSubmitFeedback}
-              disabled={!selected}
-              className="dr-btn dr-btn-submit"
-              style={{ marginTop: 16 }}
-            >
-              Submit Feedback
-            </button>
-          </>
-        )}
-      </div>
-
     </div>
   );
 };

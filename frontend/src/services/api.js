@@ -148,6 +148,14 @@ export const userApi = {
   getAnalyticsChart: (days = 7) =>
     api.get('/api/v1/user/analytics/chart', { params: { days } }),
 
+  /**
+   * Get chart data for user dashboard.
+   * @param {number} days - Number of days (default: 7)
+   * @returns {Promise<ChartData>}
+   */
+  getChartData: (days = 7) =>
+    api.get('/api/v1/user/analytics/chart', { params: { days } }),
+
   // Subscription and payment API methods removed
 
   // ═══ Feedback ═══
@@ -302,6 +310,11 @@ export const adminApi = {
   updateFeedback: (feedbackId, status, adminResponse = null) =>
     api.put(`/api/v1/admin/feedback/${feedbackId}`, null, {
       params: { status, admin_response: adminResponse }
+    }),
+
+  verifyFeedback: (feedbackId, isCorrect, adminNotes = null) =>
+    api.put(`/api/v1/admin/feedback/${feedbackId}/verify`, null, {
+      params: { is_correct: isCorrect, admin_notes: adminNotes }
     }),
 
   deleteFeedback: (feedbackId) =>

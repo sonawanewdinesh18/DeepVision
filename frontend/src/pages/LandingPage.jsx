@@ -1,14 +1,153 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Zap, Shield, Brain, BarChart3, Upload, Play, Lock, CheckCircle, Mail, Phone, MapPin, Clock, Send, Github, Linkedin } from 'lucide-react';
+import { ArrowRight, Zap, Shield, Brain, BarChart3, Upload, Play, Lock, CheckCircle, Mail, Phone, MapPin, Clock, Send, Github, Linkedin, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { FlipText } from '@/components/ui/flip-text';
 import Navbar from '@/components/common/Navbar';
 import './LandingPage.css';
-// import demoVideo from '@/assets/DeepFake.mp4';
-const demoVideo = null; // Fallback as the file is missing in assets
+import demoVideo from '@/assets/DF.mp4';
 import logoImg from '@/assets/LOGO.png';
+
+/* ─── Video Analysis Component ────────────────────────── */
+function VideoAnalysis() {
+    const videoRef = useRef(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+
+    useEffect(() => {
+        if (videoRef.current) {
+            videoRef.current.play().catch(() => {
+                // Autoplay might be blocked, that's okay
+            });
+            setIsPlaying(true);
+        }
+    }, []);
+
+    const togglePlay = () => {
+        if (videoRef.current) {
+            if (isPlaying) {
+                videoRef.current.pause();
+            } else {
+                videoRef.current.play();
+            }
+            setIsPlaying(!isPlaying);
+        }
+    };
+
+    return (
+        <div style={{ position: 'relative', width: '100%', height: '100%', background: '#000' }}>
+            {/* Video Player */}
+            <video
+                ref={videoRef}
+                src={demoVideo}
+                loop
+                muted
+                playsInline
+                onClick={togglePlay}
+                style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    cursor: 'pointer'
+                }}
+            />
+
+            {/* Play/Pause Overlay */}
+            {!isPlaying && (
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: 80,
+                        height: 80,
+                        borderRadius: '50%',
+                        background: 'rgba(0,0,0,0.7)',
+                        backdropFilter: 'blur(10px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        border: '3px solid rgba(255,255,255,0.3)',
+                        boxShadow: '0 10px 40px rgba(0,0,0,0.5)'
+                    }}
+                    onClick={togglePlay}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                >
+                    <Play size={32} color="#fff" fill="#fff" style={{ marginLeft: 4 }} />
+                </motion.div>
+            )}
+
+            {/* Corner brackets */}
+            {[
+                { top: 10, left: 10 },
+                { top: 10, right: 10 },
+                { bottom: 10, left: 10 },
+                { bottom: 10, right: 10 }
+            ].map((pos, i) => (
+                <motion.div
+                    key={i}
+                    animate={{
+                        opacity: [0.3, 0.7, 0.3],
+                        scale: [1, 1.05, 1]
+                    }}
+                    transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        delay: i * 0.2
+                    }}
+                    style={{
+                        position: 'absolute',
+                        width: 24,
+                        height: 24,
+                        ...pos,
+                        borderTop: pos.top !== undefined ? '2px solid rgba(239,68,68,0.8)' : 'none',
+                        borderBottom: pos.bottom !== undefined ? '2px solid rgba(239,68,68,0.8)' : 'none',
+                        borderLeft: pos.left !== undefined ? '2px solid rgba(239,68,68,0.8)' : 'none',
+                        borderRight: pos.right !== undefined ? '2px solid rgba(239,68,68,0.8)' : 'none',
+                    }}
+                />
+            ))}
+
+            {/* LIVE badge */}
+            <div style={{
+                position: 'absolute',
+                bottom: 12,
+                right: 12,
+                background: 'rgba(239,68,68,0.9)',
+                color: '#fff',
+                fontSize: 10,
+                fontWeight: 800,
+                padding: '5px 12px',
+                borderRadius: 999,
+                backdropFilter: 'blur(8px)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                letterSpacing: '0.07em',
+                boxShadow: '0 4px 14px rgba(239,68,68,0.5)',
+                border: '1px solid rgba(255,255,255,0.2)'
+            }}>
+                <motion.span
+                    animate={{ opacity: [1, 0.3, 1] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: '#fff',
+                        display: 'inline-block'
+                    }}
+                />
+                ANALYZING
+            </div>
+        </div>
+    );
+}
 
 /* ─── Count-up hook ─────────────────────────────────────────── */
 function useCountUp(target, duration = 1800, delay = 2700) {
@@ -264,6 +403,28 @@ export default function LandingPage() {
                 <Orb duration={12} style={{ width: 800, height: 800, top: -200, left: -150, background: 'radial-gradient(circle,rgba(108,63,245,0.4) 0%,transparent 70%)' }} />
                 <Orb duration={9} x={[0,-50,0]} y={[0,40,0]} style={{ width: 600, height: 600, bottom: -100, right: -100, background: 'radial-gradient(circle,rgba(139,92,246,0.3) 0%,transparent 70%)' }} />
 
+                {/* Floating Particles */}
+                <motion.div
+                    animate={{ y: [0, -30, 0], x: [0, 20, 0], rotate: [0, 180, 360] }}
+                    transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                    style={{ position: 'absolute', top: '15%', left: '10%', width: 60, height: 60, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,179,237,0.15), transparent)', filter: 'blur(20px)', pointerEvents: 'none' }}
+                />
+                <motion.div
+                    animate={{ y: [0, 40, 0], x: [0, -30, 0], rotate: [0, -180, -360] }}
+                    transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
+                    style={{ position: 'absolute', top: '60%', right: '15%', width: 80, height: 80, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.2), transparent)', filter: 'blur(25px)', pointerEvents: 'none' }}
+                />
+                <motion.div
+                    animate={{ y: [0, -50, 0], x: [0, 40, 0], scale: [1, 1.2, 1] }}
+                    transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+                    style={{ position: 'absolute', bottom: '20%', left: '20%', width: 100, height: 100, borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.12), transparent)', filter: 'blur(30px)', pointerEvents: 'none' }}
+                />
+                <motion.div
+                    animate={{ y: [0, 35, 0], x: [0, -25, 0], rotate: [0, 90, 180] }}
+                    transition={{ duration: 22, repeat: Infinity, ease: 'linear' }}
+                    style={{ position: 'absolute', top: '40%', right: '25%', width: 70, height: 70, borderRadius: '50%', background: 'radial-gradient(circle, rgba(245,158,11,0.15), transparent)', filter: 'blur(22px)', pointerEvents: 'none' }}
+                />
+
                 {/* Dot grid */}
                 <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: 'radial-gradient(circle,var(--border-color) 1px,transparent 1px)', backgroundSize: '40px 40px', opacity: 0.6 }} />
                 {/* Vignette */}
@@ -283,13 +444,47 @@ export default function LandingPage() {
 
                     {/* ── LEFT ── */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                        {/* Badge */}
-                        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
+                        {/* Badge with shimmer effect */}
+                        <motion.div 
+                            initial={{ opacity: 0, y: 16, scale: 0.9 }} 
+                            animate={{ opacity: 1, y: 0, scale: 1 }} 
+                            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                             style={{ marginBottom: 24 }}>
-                            <span className="badge badge-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                                <img src={logoImg} alt="logo" style={{ width: 18, height: 18, objectFit: 'contain', borderRadius: 4 }} />
-                                AI-Powered Deepfake Detection
-                            </span>
+                            <motion.span 
+                                className="badge badge-primary" 
+                                whileHover={{ scale: 1.05, y: -2 }}
+                                style={{ 
+                                    display: 'inline-flex', 
+                                    alignItems: 'center', 
+                                    gap: 6,
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    background: 'linear-gradient(135deg, rgba(108,63,245,0.15), rgba(139,92,246,0.15))',
+                                    border: '1.5px solid rgba(108,63,245,0.3)',
+                                    backdropFilter: 'blur(10px)',
+                                    boxShadow: '0 4px 20px rgba(108,63,245,0.2)',
+                                    cursor: 'default'
+                                }}>
+                                {/* Shimmer overlay */}
+                                <motion.div
+                                    animate={{ x: ['-200%', '200%'] }}
+                                    transition={{ duration: 3, repeat: Infinity, ease: 'linear', repeatDelay: 1 }}
+                                    style={{
+                                        position: 'absolute',
+                                        inset: 0,
+                                        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+                                        pointerEvents: 'none'
+                                    }}
+                                />
+                                <motion.img 
+                                    src={logoImg} 
+                                    alt="logo" 
+                                    animate={{ rotate: [0, 360] }}
+                                    transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+                                    style={{ width: 18, height: 18, objectFit: 'contain', borderRadius: 4 }} 
+                                />
+                                <span style={{ position: 'relative', zIndex: 1 }}>AI-Powered Deepfake Detection</span>
+                            </motion.span>
                         </motion.div>
 
                         {/* Letter-drop title */}
@@ -329,59 +524,183 @@ export default function LandingPage() {
 
                         <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2.2, duration: 0.6 }}
                             style={{ fontSize: '1rem', color: 'var(--text-secondary)', lineHeight: 1.75, maxWidth: 540, marginBottom: 32 }}>
-                            DeepVision gives your team superhuman visual intelligence — detect, classify, and act on what matters instantly, at any scale.
+                            Protect yourself from AI-generated deception. Instantly detect deepfakes in images and videos with 95%+ accuracy — powered by advanced neural networks.
                         </motion.p>
 
-                        {/* Buttons */}
+                        {/* Buttons with enhanced animations */}
                         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2.4, duration: 0.5 }}
                             style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 40 }}>
-                            <button onClick={() => navigate('/signin')}
+                            <motion.button 
+                                onClick={() => navigate('/signin')}
                                 className="btn btn-primary"
-                                style={{ padding: '13px 28px', fontSize: '0.95rem', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                                <Upload size={16} /> Upload Media
-                            </button>
-                            <button onClick={() => setShowVideo(true)}
-                                className="btn btn-ghost"
-                                style={{ padding: '13px 28px', fontSize: '0.95rem', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                                <Play size={16} /> Watch Demo
-                            </button>
+                                whileHover={{ scale: 1.05, y: -3 }}
+                                whileTap={{ scale: 0.98 }}
+                                style={{ 
+                                    padding: '13px 28px', 
+                                    fontSize: '0.95rem', 
+                                    display: 'inline-flex', 
+                                    alignItems: 'center', 
+                                    gap: 8,
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    background: 'linear-gradient(135deg, #6C3FF5 0%, #8B5CF6 100%)',
+                                    boxShadow: '0 10px 30px rgba(108,63,245,0.4), 0 0 0 0 rgba(108,63,245,0.5)',
+                                    animation: 'glow-pulse 3s ease-in-out infinite'
+                                }}>
+                                {/* Button shimmer */}
+                                <motion.div
+                                    animate={{ x: ['-200%', '200%'] }}
+                                    transition={{ duration: 2, repeat: Infinity, ease: 'linear', repeatDelay: 2 }}
+                                    style={{
+                                        position: 'absolute',
+                                        inset: 0,
+                                        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
+                                        pointerEvents: 'none'
+                                    }}
+                                />
+                                <motion.div
+                                    animate={{ rotate: [0, 360] }}
+                                    transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}>
+                                    <Upload size={16} />
+                                </motion.div>
+                                <span style={{ position: 'relative', zIndex: 1 }}>Upload Media</span>
+                            </motion.button>
                         </motion.div>
 
-                        {/* 4 stat boxes */}
+                        {/* 4 stat boxes with enhanced animations */}
                         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2.6, duration: 0.6 }}
                             style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
                             {STAT_BOXES.map((s, i) => (
                                 <motion.div key={i}
-                                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                                    initial={{ opacity: 0, y: 20, scale: 0.9 }} 
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
                                     transition={{ delay: 2.7 + i * 0.1, duration: 0.5 }}
-                                    whileHover={{ y: -4, scale: 1.03 }}
+                                    whileHover={{ 
+                                        y: -8, 
+                                        scale: 1.05,
+                                        boxShadow: i === 0 
+                                            ? '0 20px 50px rgba(16,185,129,0.3), 0 0 0 1px rgba(16,185,129,0.3)' 
+                                            : i === 1 
+                                            ? '0 20px 50px rgba(99,179,237,0.3), 0 0 0 1px rgba(99,179,237,0.3)' 
+                                            : i === 2 
+                                            ? '0 20px 50px rgba(139,92,246,0.3), 0 0 0 1px rgba(139,92,246,0.3)' 
+                                            : '0 20px 50px rgba(245,158,11,0.3), 0 0 0 1px rgba(245,158,11,0.3)'
+                                    }}
                                     style={{
-                                        padding: '16px 8px 14px', borderRadius: 16, textAlign: 'center',
+                                        padding: '16px 8px 14px', 
+                                        borderRadius: 16, 
+                                        textAlign: 'center',
                                         background: 'var(--bg-card)',
                                         border: '1px solid var(--border-card)',
                                         boxShadow: 'var(--shadow-md)',
-                                        position: 'relative', overflow: 'hidden',
+                                        position: 'relative', 
+                                        overflow: 'hidden',
                                         cursor: 'default',
-                                        transition: 'box-shadow 0.25s, transform 0.25s',
+                                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                        backdropFilter: 'blur(10px)'
                                     }}>
                                     {/* gradient top bar */}
-                                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: i === 0 ? 'linear-gradient(90deg,#10b981,#059669)' : i === 1 ? 'linear-gradient(90deg,#63B3ED,#3B82F6)' : i === 2 ? 'linear-gradient(90deg,#8B5CF6,#6C3FF5)' : 'linear-gradient(90deg,#F59E0B,#EF4444)' }} />
+                                    <motion.div 
+                                        initial={{ scaleX: 0 }}
+                                        animate={{ scaleX: 1 }}
+                                        transition={{ delay: 2.8 + i * 0.1, duration: 0.6 }}
+                                        style={{ 
+                                            position: 'absolute', 
+                                            top: 0, 
+                                            left: 0, 
+                                            right: 0, 
+                                            height: 3, 
+                                            background: i === 0 
+                                                ? 'linear-gradient(90deg,#10b981,#059669)' 
+                                                : i === 1 
+                                                ? 'linear-gradient(90deg,#63B3ED,#3B82F6)' 
+                                                : i === 2 
+                                                ? 'linear-gradient(90deg,#8B5CF6,#6C3FF5)' 
+                                                : 'linear-gradient(90deg,#F59E0B,#EF4444)',
+                                            transformOrigin: 'left'
+                                        }} 
+                                    />
                                     {/* glow bg */}
-                                    <div style={{ position: 'absolute', inset: 0, background: i === 0 ? 'radial-gradient(ellipse at 50% 0%,rgba(16,185,129,0.07),transparent 70%)' : i === 1 ? 'radial-gradient(ellipse at 50% 0%,rgba(99,179,237,0.07),transparent 70%)' : i === 2 ? 'radial-gradient(ellipse at 50% 0%,rgba(139,92,246,0.07),transparent 70%)' : 'radial-gradient(ellipse at 50% 0%,rgba(245,158,11,0.07),transparent 70%)', pointerEvents: 'none' }} />
-                                    {/* icon */}
-                                    <div style={{
-                                        width: 38, height: 38, borderRadius: 12, margin: '0 auto 5px',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        background: i === 0 ? 'rgba(16,185,129,0.12)' : i === 1 ? 'rgba(99,179,237,0.12)' : i === 2 ? 'rgba(139,92,246,0.12)' : 'rgba(245,158,11,0.12)',
-                                        border: `1px solid ${i === 0 ? 'rgba(16,185,129,0.25)' : i === 1 ? 'rgba(99,179,237,0.25)' : i === 2 ? 'rgba(139,92,246,0.25)' : 'rgba(245,158,11,0.25)'}`,
-                                        color: i === 0 ? '#10b981' : i === 1 ? '#63B3ED' : i === 2 ? '#8B5CF6' : '#F59E0B',
-                                    }}>{s.icon}</div>
-                                    <div style={{
-                                        fontSize: '1.25rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1,
-                                        background: i === 0 ? 'linear-gradient(135deg,#10b981,#059669)' : i === 1 ? 'linear-gradient(135deg,#63B3ED,#3B82F6)' : i === 2 ? 'linear-gradient(135deg,#8B5CF6,#6C3FF5)' : 'linear-gradient(135deg,#F59E0B,#EF4444)',
-                                        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                                    }}>{s.value}</div>
-                                    <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: 3, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', lineHeight: 1.3 }}>{s.label}</div>
+                                    <div style={{ 
+                                        position: 'absolute', 
+                                        inset: 0, 
+                                        background: i === 0 
+                                            ? 'radial-gradient(ellipse at 50% 0%,rgba(16,185,129,0.07),transparent 70%)' 
+                                            : i === 1 
+                                            ? 'radial-gradient(ellipse at 50% 0%,rgba(99,179,237,0.07),transparent 70%)' 
+                                            : i === 2 
+                                            ? 'radial-gradient(ellipse at 50% 0%,rgba(139,92,246,0.07),transparent 70%)' 
+                                            : 'radial-gradient(ellipse at 50% 0%,rgba(245,158,11,0.07),transparent 70%)', 
+                                        pointerEvents: 'none' 
+                                    }} />
+                                    {/* icon with pulse animation */}
+                                    <motion.div 
+                                        whileHover={{ rotate: 360, scale: 1.1 }}
+                                        transition={{ duration: 0.6 }}
+                                        style={{
+                                            width: 38, 
+                                            height: 38, 
+                                            borderRadius: 12, 
+                                            margin: '0 auto 5px',
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'center',
+                                            background: i === 0 
+                                                ? 'rgba(16,185,129,0.12)' 
+                                                : i === 1 
+                                                ? 'rgba(99,179,237,0.12)' 
+                                                : i === 2 
+                                                ? 'rgba(139,92,246,0.12)' 
+                                                : 'rgba(245,158,11,0.12)',
+                                            border: `1px solid ${i === 0 
+                                                ? 'rgba(16,185,129,0.25)' 
+                                                : i === 1 
+                                                ? 'rgba(99,179,237,0.25)' 
+                                                : i === 2 
+                                                ? 'rgba(139,92,246,0.25)' 
+                                                : 'rgba(245,158,11,0.25)'}`,
+                                            color: i === 0 
+                                                ? '#10b981' 
+                                                : i === 1 
+                                                ? '#63B3ED' 
+                                                : i === 2 
+                                                ? '#8B5CF6' 
+                                                : '#F59E0B',
+                                        }}>
+                                        {s.icon}
+                                    </motion.div>
+                                    <motion.div 
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        transition={{ delay: 2.9 + i * 0.1, duration: 0.5, type: 'spring' }}
+                                        style={{
+                                            fontSize: '1.25rem', 
+                                            fontWeight: 900, 
+                                            letterSpacing: '-0.03em', 
+                                            lineHeight: 1,
+                                            background: i === 0 
+                                                ? 'linear-gradient(135deg,#10b981,#059669)' 
+                                                : i === 1 
+                                                ? 'linear-gradient(135deg,#63B3ED,#3B82F6)' 
+                                                : i === 2 
+                                                ? 'linear-gradient(135deg,#8B5CF6,#6C3FF5)' 
+                                                : 'linear-gradient(135deg,#F59E0B,#EF4444)',
+                                            WebkitBackgroundClip: 'text', 
+                                            WebkitTextFillColor: 'transparent',
+                                        }}>
+                                        {s.value}
+                                    </motion.div>
+                                    <div style={{ 
+                                        fontSize: '0.6rem', 
+                                        color: 'var(--text-muted)', 
+                                        marginTop: 3, 
+                                        fontWeight: 700, 
+                                        textTransform: 'uppercase', 
+                                        letterSpacing: '0.05em', 
+                                        lineHeight: 1.3 
+                                    }}>
+                                        {s.label}
+                                    </div>
                                 </motion.div>
                             ))}
                         </motion.div>
@@ -413,81 +732,35 @@ export default function LandingPage() {
                                 </div>
                             </div>
 
-                            {/* Video */}
-                            <div style={{ position: 'relative', aspectRatio: '16/9', background: '#000' }}>
-                                {demoVideo ? (
-                                    <video ref={videoRef} src={demoVideo} loop muted playsInline autoPlay
-                                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                                ) : (
-                                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', fontSize: '0.9rem' }}>
-                                        Demo video placeholder
-                                    </div>
-                                )}
-
-                                {/* scan line */}
-                                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,transparent 0%,rgba(108,63,245,0.04) 50%,transparent 100%)', pointerEvents: 'none' }} />
-
-                                {/* corner brackets */}
-                                {[{top:10,left:10},{top:10,right:10},{bottom:10,left:10},{bottom:10,right:10}].map((pos,i) => (
-                                    <div key={i} style={{ position:'absolute', width:20, height:20, ...pos,
-                                        borderTop: pos.top!==undefined ? '2px solid rgba(99,179,237,0.9)' : 'none',
-                                        borderBottom: pos.bottom!==undefined ? '2px solid rgba(99,179,237,0.9)' : 'none',
-                                        borderLeft: pos.left!==undefined ? '2px solid rgba(99,179,237,0.9)' : 'none',
-                                        borderRight: pos.right!==undefined ? '2px solid rgba(99,179,237,0.9)' : 'none',
-                                    }} />
-                                ))}
-
-                                {/* face detection box simulation */}
-                                <div style={{ position: 'absolute', top: '22%', left: '30%', width: '38%', height: '55%', border: '1.5px solid rgba(99,179,237,0.7)', borderRadius: 4, boxShadow: '0 0 12px rgba(99,179,237,0.3) inset' }}>
-                                    <div style={{ position: 'absolute', top: -10, left: 8, background: 'rgba(0,0,0,0.65)', color: '#63B3ED', fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, letterSpacing: '0.06em', backdropFilter: 'blur(4px)' }}>FACE #1 · 98.2%</div>
-                                </div>
-
-                                {/* LIVE badge */}
-                                <div style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(16,185,129,0.92)', color: '#fff', fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 999, backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', gap: 5, letterSpacing: '0.07em', boxShadow: '0 4px 14px rgba(16,185,129,0.45)' }}>
-                                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', display: 'inline-block', animation: 'livepulse 1.4s infinite' }} />
-                                    LIVE
-                                </div>
-
-                                {/* model tag */}
-                                <div style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(108,63,245,0.85)', color: '#fff', fontSize: 9, fontWeight: 700, padding: '3px 9px', borderRadius: 6, backdropFilter: 'blur(6px)', letterSpacing: '0.05em' }}>
-                                    EfficientNet-B4
-                                </div>
-
-                                {/* frame counter */}
-                                <div style={{ position: 'absolute', bottom: 10, left: 12, background: 'rgba(0,0,0,0.6)', color: 'rgba(255,255,255,0.7)', fontSize: 9, fontWeight: 600, padding: '3px 9px', borderRadius: 5, backdropFilter: 'blur(6px)', letterSpacing: '0.04em' }}>
-                                    FRAME 0142 · 30fps · 1080p
-                                </div>
-
-                                {/* processing indicator */}
-                                <div style={{ position: 'absolute', bottom: 10, right: 12, display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(0,0,0,0.6)', padding: '3px 9px', borderRadius: 5, backdropFilter: 'blur(6px)' }}>
-                                    <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#63B3ED', animation: 'livepulse 0.8s infinite' }} />
-                                    <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#63B3ED', animation: 'livepulse 0.8s 0.2s infinite' }} />
-                                    <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#63B3ED', animation: 'livepulse 0.8s 0.4s infinite' }} />
-                                </div>
+                            {/* Video with Analysis */}
+                            <div style={{ position: 'relative', aspectRatio: '16/9', background: '#000', overflow: 'hidden' }}>
+                                <VideoAnalysis />
                             </div>
 
-                            {/* Result panel */}
+                            {/* Result panel - Deepfake Detection */}
                             <div style={{ padding: '16px 18px', background: 'var(--bg-card)' }}>
                                 {/* header */}
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px rgba(16,185,129,0.6)' }} />
+                                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 6px rgba(239,68,68,0.6)' }} />
                                         <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Analysis Complete</span>
                                     </div>
-                                    <span style={{ fontSize: 10, fontWeight: 700, color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '3px 10px', borderRadius: 999, border: '1px solid rgba(16,185,129,0.2)', letterSpacing: '0.05em' }}>✓ AUTHENTIC</span>
+                                    <span style={{ fontSize: 10, fontWeight: 700, color: '#ef4444', background: 'rgba(239,68,68,0.1)', padding: '3px 10px', borderRadius: 999, border: '1px solid rgba(239,68,68,0.2)', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                        <AlertTriangle size={10} /> DEEPFAKE
+                                    </span>
                                 </div>
 
                                 {/* main result */}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                                    <div style={{ width: 44, height: 44, borderRadius: 13, background: 'linear-gradient(135deg,#10b981,#059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 18px rgba(16,185,129,0.35)', flexShrink: 0 }}>
-                                        <Shield size={20} color="#fff" />
+                                    <div style={{ width: 44, height: 44, borderRadius: 13, background: 'linear-gradient(135deg,#ef4444,#dc2626)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 18px rgba(239,68,68,0.35)', flexShrink: 0 }}>
+                                        <AlertTriangle size={20} color="#fff" />
                                     </div>
                                     <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--text-primary)', marginBottom: 2 }}>No Deepfake Detected</div>
-                                        <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>GAN artifacts · splice · face-swap — all clear</div>
+                                        <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--text-primary)', marginBottom: 2 }}>Deepfake Detected</div>
+                                        <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>GAN artifacts · face manipulation · synthetic media</div>
                                     </div>
                                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                                        <div style={{ fontSize: '1.5rem', fontWeight: 900, letterSpacing: '-0.03em', background: 'linear-gradient(135deg,#10b981,#059669)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>98.2%</div>
+                                        <div style={{ fontSize: '1.5rem', fontWeight: 900, letterSpacing: '-0.03em', background: 'linear-gradient(135deg,#ef4444,#dc2626)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>95%</div>
                                         <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Confidence</div>
                                     </div>
                                 </div>
@@ -495,32 +768,18 @@ export default function LandingPage() {
                                 {/* confidence bar */}
                                 <div style={{ marginBottom: 12 }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                                        <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>Authenticity Score</span>
-                                        <span style={{ fontSize: 10, color: '#10b981', fontWeight: 700 }}>98.2 / 100</span>
+                                        <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>Deepfake Probability</span>
+                                        <span style={{ fontSize: 10, color: '#ef4444', fontWeight: 700 }}>95 / 100</span>
                                     </div>
                                     <div style={{ height: 7, borderRadius: 999, background: 'var(--bg-surface)', overflow: 'hidden', position: 'relative' }}>
-                                        <motion.div initial={{ width: 0 }} animate={{ width: '98.2%' }}
+                                        <motion.div initial={{ width: 0 }} animate={{ width: '95%' }}
                                             transition={{ delay: 1.0, duration: 1.4, ease: [0.22,1,0.36,1] }}
-                                            style={{ height: '100%', borderRadius: 999, background: 'linear-gradient(90deg,#10b981,#34d399)', position: 'relative' }}>
+                                            style={{ height: '100%', borderRadius: 999, background: 'linear-gradient(90deg,#ef4444,#dc2626)', position: 'relative' }}>
                                             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent)', borderRadius: 999 }} />
                                         </motion.div>
                                     </div>
                                 </div>
 
-                                {/* 4 mini metrics */}
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 7 }}>
-                                    {[
-                                        { label: 'Faces', value: '2', color: '#63B3ED' },
-                                        { label: 'Frames', value: '142', color: '#8B5CF6' },
-                                        { label: 'Time', value: '0.6s', color: '#10b981' },
-                                        { label: 'Model', value: 'B4', color: '#F59E0B' },
-                                    ].map((m) => (
-                                        <div key={m.label} style={{ padding: '7px 6px', borderRadius: 9, background: 'var(--bg-surface)', border: '1px solid var(--border-color)', textAlign: 'center' }}>
-                                            <div style={{ fontSize: '0.82rem', fontWeight: 900, color: m.color }}>{m.value}</div>
-                                            <div style={{ fontSize: '0.58rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 2 }}>{m.label}</div>
-                                        </div>
-                                    ))}
-                                </div>
                             </div>
                         </div>
 

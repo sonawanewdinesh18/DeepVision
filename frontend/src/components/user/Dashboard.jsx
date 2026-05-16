@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileVideo, CheckCircle, AlertTriangle, Target, Upload, TrendingUp } from 'lucide-react';
+import { FileVideo, CheckCircle, AlertTriangle, Target, Upload, TrendingUp, BarChart3 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { userApi, detectionApi } from '@/services/api';
 import { SkeletonLoader } from '@/components/common/LoadingSpinner';
@@ -51,7 +51,7 @@ const Dashboard = ({ setActiveView }) => {
       const detections = historyResponse.data.items.map(item => ({
         id: item.id,
         file: item.file_name,
-        result: item.verdict.toLowerCase(),
+        result: item.verdict.toLowerCase() === 'real' ? 'authentic' : 'deepfake',
         confidence: (item.confidence * 100).toFixed(1),
         time: formatTimeAgo(item.created_at)
       }));
@@ -157,11 +157,8 @@ const Dashboard = ({ setActiveView }) => {
       <div className="ud-middle-grid">
         {/* Detection Activity */}
         <div className="ud-card ud-activity-card ud-activity-full-width">
-          <h2 className="ud-card-title">Detection Activity</h2>
-          <div className="ud-chart-placeholder">
-            <TrendingUp size={48} className="ud-chart-icon" />
-            <p className="ud-chart-label">Activity chart visualization</p>
-          </div>
+          <h2 className="ud-card-title">Detection Activity (Last 7 Days)</h2>
+          <DetectionChart userId={user?.id} />
         </div>
       </div>
 
@@ -200,6 +197,140 @@ const Dashboard = ({ setActiveView }) => {
         </div>
       </div>
 
+    </div>
+  );
+};
+
+// Detection Chart Component
+const DetectionChart = ({ userId }) => {
+  const [chartData, setChartData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchChartData();
+  }, [userId]);
+
+  const fetchChartData = async () => {
+    try {
+      setLoading(true);
+      const response = await userApi.getChartData(7);
+      
+      // Generate last 7 days
+      const last7Days = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        last7Days.push(dateStr);
+      }
+      
+      // Map response data to chart format
+      const labels = response.data?.labels || last7Days;
+      const authentic = response.data?.authentic || [];
+      const deepfake = response.data?.deepfake || [];
+      
+      // Create chart data object
+      const chartObj = {};
+      labels.forEach((label, index) => {
+        chartObj[label] = {
+          authentic: authentic[index] || 0,
+          deepfake: deepfake[index] || 0
+        };
+      });
+      
+      setChartData(chartObj);
+    } catch (err) {
+      console.error('Failed to fetch chart data:', err);
+      // Show empty chart on error
+      const last7Days = {};
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        last7Days[dateStr] = { authentic: 0, deepfake: 0 };
+      }
+      setChartData(last7Days);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="ud-chart-placeholder">
+        <TrendingUp size={48} className="ud-chart-icon" />
+        <p className="ud-chart-label">Loading chart...</p>
+      </div>
+    );
+  }
+
+  if (!chartData || Object.keys(chartData).length === 0) {
+    return (
+      <div className="ud-chart-placeholder">
+        <BarChart3 size={48} className="ud-chart-icon" />
+        <p className="ud-chart-label">No detection data available</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ud-chart-container">
+      <div className="ud-simple-chart">
+        {Object.entries(chartData).map(([date, data], index) => {
+          const total = (data.authentic || 0) + (data.deepfake || 0);
+          const allTotals = Object.values(chartData).map(d => (d.authentic || 0) + (d.deepfake || 0));
+          const maxTotal = Math.max(...allTotals, 1);
+          const maxHeight = 180;
+          const height = total > 0 ? (total / maxTotal) * maxHeight : 10;
+          
+          return (
+            <div key={date} className="ud-chart-bar-group">
+              <div className="ud-chart-bar-stack" style={{ height: `${height}px` }}>
+                {total > 0 ? (
+                  <>
+                    <div 
+                      className="ud-chart-bar ud-authentic" 
+                      style={{ 
+                        height: `${((data.authentic || 0) / total) * 100}%`,
+                        background: 'linear-gradient(180deg, #10B981 0%, #059669 100%)'
+                      }}
+                      title={`Authentic: ${data.authentic || 0}`}
+                    />
+                    <div 
+                      className="ud-chart-bar ud-deepfake" 
+                      style={{ 
+                        height: `${((data.deepfake || 0) / total) * 100}%`,
+                        background: 'linear-gradient(180deg, #EF4444 0%, #DC2626 100%)'
+                      }}
+                      title={`Deepfake: ${data.deepfake || 0}`}
+                    />
+                  </>
+                ) : (
+                  <div 
+                    className="ud-chart-bar ud-empty" 
+                    style={{ 
+                      height: '100%',
+                      background: 'var(--border-color)'
+                    }}
+                    title="No data"
+                  />
+                )}
+              </div>
+              <div className="ud-chart-label">{date}</div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="ud-chart-legend">
+        <div className="ud-legend-item">
+          <div className="ud-legend-color" style={{ background: '#10B981' }}></div>
+          <span>Authentic</span>
+        </div>
+        <div className="ud-legend-item">
+          <div className="ud-legend-color" style={{ background: '#EF4444' }}></div>
+          <span>Deepfake</span>
+        </div>
+      </div>
     </div>
   );
 };

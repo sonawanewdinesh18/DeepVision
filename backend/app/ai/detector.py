@@ -1,23 +1,33 @@
 """
 Main Detection Engine
 Orchestrates the complete detection pipeline for images and videos.
+Uses hybrid approach for comprehensive deepfake detection.
 """
 
 import logging
-from typing import Dict, Any, Tuple
+from typing import Dict, Any
 from datetime import datetime, timezone
 
 from .validators import MediaValidator, ValidationError
-from .models import get_image_model, get_video_model, ModelLoadError, InferenceError
+from .improved_hybrid_detector import improved_hybrid_detector
 
 logger = logging.getLogger(__name__)
 
 
 class DetectionEngine:
-    """Main detection engine that handles the complete pipeline."""
+    """
+    Main detection engine that handles the complete pipeline.
+    
+    Detection Strategy:
+    Uses hybrid approach combining:
+    1. CLIP for AI-generated images
+    2. Face analysis for face-swap deepfakes
+    3. Artifact detection for manipulated images
+    """
     
     def __init__(self):
         self.validator = MediaValidator()
+        self.detector = improved_hybrid_detector
     
     async def detect_deepfake(self, file_bytes: bytes, filename: str, content_type: str) -> Dict[str, Any]:
         """
@@ -41,19 +51,23 @@ class DetectionEngine:
             media_type = validation_result["media_type"]
             logger.info(f"File validated as {media_type}: {validation_result}")
             
-            # Step 2: Run appropriate model
+            # Step 2: Run detection
             if media_type == "image":
-                confidence, verdict, model_details = await self._detect_image(file_bytes)
+                result = await self.detector.detect_image(file_bytes, filename)
             elif media_type == "video":
-                confidence, verdict, model_details = await self._detect_video(file_bytes)
+                result = await self.detector.detect_video(file_bytes, filename)
             else:
                 raise ValueError(f"Unsupported media type: {media_type}")
+            
+            confidence = result["confidence"]
+            verdict = result["verdict"]
+            model_details = result["details"]
             
             # Step 3: Compile complete result
             detection_end = datetime.now(timezone.utc)
             total_processing_time = int((detection_end - detection_start).total_seconds() * 1000)
             
-            result = {
+            final_result = {
                 "verdict": verdict,
                 "confidence": round(confidence, 4),
                 "media_type": media_type,
@@ -68,59 +82,43 @@ class DetectionEngine:
                     "filename": filename,
                     "content_type": content_type,
                     "file_size_bytes": len(file_bytes),
-                    "engine_version": "DeepVision-Engine-v1.0"
+                    "engine_version": "DeepVision-Improved-Hybrid-v2.0"
                 }
             }
             
             logger.info(f"Detection completed: {verdict} ({confidence:.4f}) in {total_processing_time}ms")
-            return result
+            return final_result
             
         except ValidationError as e:
             logger.warning(f"Validation failed for {filename}: {e}")
             raise
-        except (ModelLoadError, InferenceError) as e:
-            logger.error(f"AI model error for {filename}: {e}")
+        except RuntimeError as e:
+            logger.error(f"Detection error for {filename}: {e}")
             raise
         except Exception as e:
             logger.error(f"Unexpected error during detection for {filename}: {e}")
             raise RuntimeError(f"Detection failed: {e}")
     
-    async def _detect_image(self, image_bytes: bytes) -> Tuple[float, str, Dict[str, Any]]:
-        """Run image deepfake detection."""
-        try:
-            image_model = get_image_model()
-            confidence, verdict, details = image_model.predict(image_bytes)
-            return confidence, verdict, details
-        except Exception as e:
-            logger.error(f"Image detection failed: {e}")
-            raise InferenceError(f"Image detection failed: {e}")
-    
-    async def _detect_video(self, video_bytes: bytes) -> Tuple[float, str, Dict[str, Any]]:
-        """Run video deepfake detection."""
-        try:
-            video_model = get_video_model()
-            confidence, verdict, details = video_model.predict(video_bytes)
-            return confidence, verdict, details
-        except Exception as e:
-            logger.error(f"Video detection failed: {e}")
-            raise InferenceError(f"Video detection failed: {e}")
-    
     def get_model_info(self) -> Dict[str, Any]:
-        """Get information about loaded models."""
-        image_model = get_image_model()
-        video_model = get_video_model()
-        
+        """Get information about detection system status."""
         return {
-            "image_model": {
-                "loaded": image_model.is_loaded,
-                "version": image_model.IMAGE_MODEL_VERSION if hasattr(image_model, 'IMAGE_MODEL_VERSION') else "Unknown",
-                "device": str(image_model.device)
+            "primary_detector": {
+                "type": "Hybrid Multi-Method Detection",
+                "methods": [
+                    "CLIP AI-Generated Detection (40%)",
+                    "Face-Swap Deepfake Detection (40%)",
+                    "Manipulation Artifact Detection (20%)"
+                ],
+                "models": [
+                    "openai/clip-vit-base-patch32",
+                    "MTCNN Face Detector"
+                ],
+                "available": True,
+                "status": "active",
+                "trained_on": "Multiple datasets"
             },
-            "video_model": {
-                "loaded": video_model.is_loaded,
-                "version": video_model.VIDEO_MODEL_VERSION if hasattr(video_model, 'VIDEO_MODEL_VERSION') else "Unknown",
-                "device": str(video_model.device)
-            }
+            "detection_mode": "Hybrid",
+            "version": "1.0"
         }
 
 

@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { Spinner } from '@/components/common/Loader';
+import { ButtonLoader } from '@/components/common/LoadingSpinner';
 
 
 // Google "G" SVG icon
@@ -44,7 +44,7 @@ export function GoogleButton({ onClick, isLoading = false, label = 'Continue wit
         >
             {isLoading ? (
                 <>
-                    <Spinner size="sm" />
+                    <ButtonLoader size={18} />
                     <span>Connecting...</span>
                 </>
             ) : (

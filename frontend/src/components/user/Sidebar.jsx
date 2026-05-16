@@ -77,7 +77,8 @@ const Sidebar = ({ isOpen, activeView, setActiveView }) => {
   const fetchHistory = async () => {
     try {
       setLoading(true);
-      const response = await detectionApi.getHistory({ page: 1, limit: 10 });
+      // Load ALL history items (up to 1000)
+      const response = await detectionApi.getHistory({ page: 1, limit: 1000 });
       const items = response.data.items.map(item => ({
         id: item.id,
         file: item.file_name,
@@ -96,7 +97,7 @@ const Sidebar = ({ isOpen, activeView, setActiveView }) => {
 
   const handleHistoryClick = (item) => {
     setSelectedId(item.id);
-    setActiveView('result');
+    setActiveView('result', item.id);
   };
 
   const togglePin = (itemId, e) => {
