@@ -1,0 +1,25 @@
+# Git & IDE
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# Python Cache & Environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local Environment & Secrets
+.env
+*.log
+temp_uploads/
+
+# Large Model Binaries (Mount via Volume or Download in Entrypoint)
+models/*.pth
+!models/README.md

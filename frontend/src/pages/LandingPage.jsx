@@ -6,8 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { FlipText } from '@/components/ui/flip-text';
 import Navbar from '@/components/common/Navbar';
 import './LandingPage.css';
-// import demoVideo from '@/assets/DeepFake.mp4';
-const demoVideo = null; // Fallback as the file is missing in assets
+import demoVideo from '@/assets/DF.mp4';
 import logoImg from '@/assets/LOGO.png';
 
 /* ─── Count-up hook ─────────────────────────────────────────── */
@@ -450,7 +449,7 @@ export default function LandingPage() {
 
                                 {/* model tag */}
                                 <div style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(108,63,245,0.85)', color: '#fff', fontSize: 9, fontWeight: 700, padding: '3px 9px', borderRadius: 6, backdropFilter: 'blur(6px)', letterSpacing: '0.05em' }}>
-                                    EfficientNet-B4
+                                    Hybrid-ViT (ViT + CNN)
                                 </div>
 
                                 {/* frame counter */}

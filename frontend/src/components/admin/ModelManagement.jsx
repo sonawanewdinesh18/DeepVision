@@ -24,7 +24,8 @@ const ModelManagement = () => {
       setLoading(true);
       setError(null);
       const response = await adminApi.getModels();
-      setModels(response.models);
+      const data = response.data || response;
+      setModels(data.models || []);
     } catch (err) {
       setError(err.message || 'Failed to fetch models');
       console.error('Error fetching models:', err);

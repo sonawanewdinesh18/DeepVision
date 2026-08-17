@@ -25,7 +25,23 @@ const VIEW_MAP = {
 
 export default function UserDashboard() {
   const [activeView, setActiveView] = useState('dashboard');
+  const [detectionId, setDetectionId] = useState(null);
+  const [initialResult, setInitialResult] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const triggerRefresh = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleNavigate = (view, detId = null, resultData = null) => {
+    setActiveView(view);
+    setDetectionId(detId);
+    setInitialResult(resultData);
+    if (resultData) {
+      triggerRefresh();
+    }
+  };
 
   const ActiveComponent = VIEW_MAP[activeView] ?? Dashboard;
 
@@ -52,7 +68,8 @@ export default function UserDashboard() {
         <Sidebar
           isOpen={isSidebarOpen}
           activeView={activeView}
-          setActiveView={setActiveView}
+          setActiveView={handleNavigate}
+          refreshTrigger={refreshTrigger}
         />
 
         {/* Main content - Scrollable */}
@@ -65,7 +82,13 @@ export default function UserDashboard() {
           height: '100%',
         }}>
           <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-            <ActiveComponent setActiveView={setActiveView} />
+            <ActiveComponent 
+              setActiveView={handleNavigate} 
+              detectionId={detectionId}
+              initialResult={initialResult}
+              refreshTrigger={refreshTrigger}
+              triggerRefresh={triggerRefresh}
+            />
           </div>
         </main>
       </div>

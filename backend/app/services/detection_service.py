@@ -1,204 +1,255 @@
 """
 app/services/detection_service.py
-Business logic for deepfake detection.
 
-This module acts as the bridge between the API layer and the AI detection engine.
-Integrates with the professional AI module for real deepfake detection.
+Business logic for media ingestion, AI inference orchestration,
+storage management, and database persistence.
 """
 
 import uuid
 import logging
 from datetime import datetime, timezone
-from fastapi import UploadFile, HTTPException
+from typing import Optional
+from fastapi import UploadFile, HTTPException, status
 
-from app.core.supabase_client import get_supabase
-from app.models.schemas import DetectionResult, DetectionVerdict, MediaType
-from app.ai.detector import detection_engine
-from app.ai.validators import ValidationError
-from app.ai.models import ModelLoadError, InferenceError
+from app.core.config import settings
+from app.core.database import get_supabase
+from app.core.exceptions import CustomAPIException
+from app.schemas.common import MediaType, DetectionVerdict
+from app.schemas.detection import (
+    DetectionResult,
+    DetectionHistoryItem,
+    DetectionHistoryResponse,
+)
+from app.engine.validator import MediaValidator, ValidationError
+from app.engine.predictor import predict_image, predict_video
+from app.engine.model import ModelLoadError, InferenceError
 
 logger = logging.getLogger(__name__)
 
 
 class DetectionService:
-    """Handles file pre-processing, AI model inference, and result packaging."""
-
-    def __init__(self):
-        self.detection_engine = detection_engine
-
-    def _resolve_media_type(self, content_type: str) -> MediaType:
-        """Convert content type to MediaType enum."""
-        if content_type.startswith("image/"):
-            return MediaType.image
-        elif content_type.startswith("video/"):
-            return MediaType.video
-        else:
-            raise ValueError(f"Unsupported media type: {content_type}")
-
-    async def analyze(self, file: UploadFile) -> DetectionResult:
-        """
-        Analyze an uploaded media file for deepfake indicators.
-
-        Steps:
-          1. Validate media type and file
-          2. Read file bytes
-          3. Run AI detection engine
-          4. Package result
-        """
-        try:
-            # Validate content type
-            media_type = self._resolve_media_type(file.content_type or "")
-            
-            # Read file bytes
-            file_bytes = await file.read()
-            
-            # Run AI detection
-            detection_result = await self.detection_engine.detect_deepfake(
-                file_bytes=file_bytes,
-                filename=file.filename or "unknown",
-                content_type=file.content_type or ""
-            )
-            
-            # Convert AI result to API schema
-            verdict = DetectionVerdict.fake if detection_result["verdict"] == "FAKE" else DetectionVerdict.real
-            
-            return DetectionResult(
-                id=str(uuid.uuid4()),
-                verdict=verdict,
-                confidence=detection_result["confidence"],
-                media_type=media_type,
-                file_name=file.filename or "unknown",
-                file_url="",
-                model_version=detection_result["metadata"]["engine_version"],
-                processing_time_ms=detection_result["processing_metrics"]["total_processing_time_ms"],
-                created_at=datetime.now(timezone.utc),
-                details={
-                    "file_name": file.filename,
-                    "file_size_bytes": detection_result["metadata"]["file_size_bytes"],
-                    "ai_analysis": detection_result["model_analysis"],
-                    "validation_info": detection_result["file_validation"]
-                },
-            )
-            
-        except ValidationError as e:
-            logger.warning(f"File validation failed: {e}")
-            raise HTTPException(status_code=400, detail=f"File validation failed: {str(e)}")
-        except (ModelLoadError, InferenceError) as e:
-            logger.error(f"AI model error: {e}")
-            raise HTTPException(status_code=500, detail="AI detection service temporarily unavailable")
-        except Exception as e:
-            logger.error(f"Unexpected error during analysis: {e}")
-            raise HTTPException(status_code=500, detail="Detection analysis failed")
+    """Service handling deepfake detection lifecycles."""
 
     async def analyze_and_save(self, file: UploadFile, user_id: str) -> DetectionResult:
         """
-        Analyze media and save to database with full AI detection.
+        End-to-end detection:
+          1. Read & validate media
+          2. Run PyTorch HybridViTCNN inference
+          3. Upload media to Supabase Storage
+          4. Persist detection record & forensic analytics to Supabase DB
         """
+        filename = file.filename or "uploaded_media"
+        content_type = file.content_type or "application/octet-stream"
+
         try:
-            # Validate content type
-            media_type = self._resolve_media_type(file.content_type or "")
-            
-            # Read file bytes
             file_bytes = await file.read()
-            file_size = len(file_bytes)
-            
-            # Run AI detection first
-            detection_result = await self.detection_engine.detect_deepfake(
-                file_bytes=file_bytes,
-                filename=file.filename or "unknown",
-                content_type=file.content_type or ""
+            if not file_bytes:
+                raise CustomAPIException(
+                    message="Uploaded file is empty.",
+                    code="EMPTY_FILE",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Step 1: Validate media file
+            validation_info = MediaValidator.validate_media_file(
+                file_bytes, filename, content_type
             )
-            
-            # Upload file to Supabase Storage
+            media_type_str = validation_info["media_type"]
+            media_type = MediaType.image if media_type_str == "image" else MediaType.video
+
+            # Step 2: Run AI Model Inference
+            if media_type == MediaType.image:
+                confidence, verdict_str, model_details = predict_image(file_bytes)
+            else:
+                confidence, verdict_str, model_details = predict_video(file_bytes)
+
+            verdict = DetectionVerdict.fake if verdict_str == "FAKE" else DetectionVerdict.real
+            processing_time_ms = model_details.get("inference_ms", 0)
+
+            # Step 3: Upload to Supabase Storage
             supabase = get_supabase()
-            file_path = f"{user_id}/{uuid.uuid4()}_{file.filename}"
-            
-            storage_response = supabase.storage.from_("detection-media").upload(
-                file_path,
-                file_bytes,
-                {"content-type": file.content_type}
-            )
-            
-            # Get public URL
-            file_url = supabase.storage.from_("detection-media").get_public_url(file_path)
-            
-            # Convert AI result
-            verdict = DetectionVerdict.fake if detection_result["verdict"] == "FAKE" else DetectionVerdict.real
-            confidence = detection_result["confidence"]
-            processing_time = detection_result["processing_metrics"]["total_processing_time_ms"]
-            
             detection_id = str(uuid.uuid4())
-            
-            # Save to database
+            storage_path = f"{user_id}/{detection_id}_{filename}"
+            file_url = ""
+
+            try:
+                supabase.storage.from_(settings.SUPABASE_STORAGE_BUCKET).upload(
+                    storage_path,
+                    file_bytes,
+                    {"content-type": content_type}
+                )
+                raw_url = supabase.storage.from_(settings.SUPABASE_STORAGE_BUCKET).get_public_url(storage_path)
+                # Strip trailing '?' if returned by Supabase
+                file_url = raw_url.rstrip("?") if isinstance(raw_url, str) else ""
+            except Exception as storage_err:
+                logger.warning(f"Storage upload skipped or failed: {storage_err}")
+                file_url = ""
+
+            # Step 4: Persist in Database
             detection_data = {
                 "id": detection_id,
                 "user_id": user_id,
-                "file_name": file.filename or "unknown",
+                "file_name": filename,
                 "file_url": file_url,
                 "file_type": media_type.value,
-                "file_size": file_size,
+                "file_size": len(file_bytes),
                 "verdict": verdict.value,
                 "confidence": confidence,
-                "model_version": detection_result["metadata"]["engine_version"],
-                "processing_time_ms": processing_time,
+                "model_version": settings.MODEL_VERSION,
+                "processing_time_ms": processing_time_ms,
                 "metadata": {
-                    "ai_analysis": detection_result["model_analysis"],
-                    "validation_info": detection_result["file_validation"],
-                    "processing_metrics": detection_result["processing_metrics"]
-                }
+                    "ai_analysis": model_details,
+                    "validation_info": validation_info,
+                },
             }
-            
+
             supabase.table("detections").insert(detection_data).execute()
-            
-            # Save detailed analytics
-            analytics_data = {
-                "detection_id": detection_id,
-                "faces_detected": detection_result["model_analysis"].get("faces_detected", 0),
-                "artifacts_found": detection_result["model_analysis"].get("artifacts_found", []),
-                "frame_analysis": detection_result["model_analysis"]
-            }
-            supabase.table("detection_analytics").insert(analytics_data).execute()
-            
+
+            # Persist Detailed Analytics
+            try:
+                analytics_data = {
+                    "detection_id": detection_id,
+                    "faces_detected": 1 if media_type == MediaType.image else len(model_details.get("frame_results", [])),
+                    "artifacts_found": [],
+                    "frame_analysis": model_details,
+                }
+                supabase.table("detection_analytics").insert(analytics_data).execute()
+            except Exception as analytics_err:
+                logger.warning(f"Failed to record detection analytics: {analytics_err}")
+
             return DetectionResult(
                 id=detection_id,
                 verdict=verdict,
                 confidence=confidence,
                 media_type=media_type,
-                file_name=file.filename or "unknown",
+                file_name=filename,
                 file_url=file_url,
-                model_version=detection_result["metadata"]["engine_version"],
-                processing_time_ms=processing_time,
+                model_version=settings.MODEL_VERSION,
+                processing_time_ms=processing_time_ms,
                 created_at=datetime.now(timezone.utc),
                 details={
-                    "file_name": file.filename,
-                    "file_size_bytes": file_size,
-                    "ai_analysis": detection_result["model_analysis"],
-                    "validation_info": detection_result["file_validation"]
+                    "file_name": filename,
+                    "file_size_bytes": len(file_bytes),
+                    "ai_analysis": model_details,
+                    "validation_info": validation_info,
                 },
             )
-            
-        except ValidationError as e:
-            logger.warning(f"File validation failed for user {user_id}: {e}")
-            raise HTTPException(status_code=400, detail=f"File validation failed: {str(e)}")
-        except (ModelLoadError, InferenceError) as e:
-            logger.error(f"AI model error for user {user_id}: {e}")
-            raise HTTPException(status_code=500, detail="AI detection service temporarily unavailable")
-        except Exception as e:
-            logger.error(f"Unexpected error during analysis for user {user_id}: {e}")
-            raise HTTPException(status_code=500, detail="Detection analysis failed")
 
-    def get_model_status(self) -> dict:
-        """Get current AI model status for admin monitoring."""
-        try:
-            return self.detection_engine.get_model_info()
-        except Exception as e:
-            logger.error(f"Failed to get model status: {e}")
-            return {
-                "error": str(e),
-                "image_model": {"loaded": False},
-                "video_model": {"loaded": False}
-            }
+        except ValidationError as exc:
+            raise CustomAPIException(
+                message=str(exc),
+                code="INVALID_MEDIA_FILE",
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        except ModelLoadError as exc:
+            logger.error(f"Model load error: {exc}")
+            raise CustomAPIException(
+                message="AI model service is currently unavailable.",
+                code="MODEL_UNAVAILABLE",
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except InferenceError as exc:
+            logger.error(f"Inference error: {exc}")
+            raise CustomAPIException(
+                message=f"Detection analysis failed: {exc}",
+                code="INFERENCE_FAILED",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        except CustomAPIException:
+            raise
+        except Exception as exc:
+            logger.exception("Unexpected error during detection.")
+            raise CustomAPIException(
+                message=f"An unexpected error occurred during processing: {exc}",
+                code="PROCESSING_ERROR",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    async def get_history(self, user_id: str, page: int = 1, limit: int = 20) -> DetectionHistoryResponse:
+        """Fetch paginated detection history for a user."""
+        supabase = get_supabase()
+        offset = (page - 1) * limit
+
+        # Exact count query
+        count_resp = supabase.table("detections").select("id", count="exact").eq("user_id", user_id).execute()
+        total = count_resp.count or 0
+
+        # Paginated rows including file_url and processing_time_ms
+        resp = supabase.table("detections").select(
+            "id, verdict, confidence, file_type, file_name, file_url, processing_time_ms, created_at"
+        ).eq("user_id", user_id).order("created_at", desc=True).range(offset, offset + limit - 1).execute()
+
+        items = [
+            DetectionHistoryItem(
+                id=item["id"],
+                verdict=item["verdict"],
+                confidence=item["confidence"],
+                media_type=item["file_type"],
+                file_name=item["file_name"],
+                file_url=item.get("file_url") or "",
+                processing_time_ms=item.get("processing_time_ms"),
+                created_at=item["created_at"],
+            )
+            for item in (resp.data or [])
+        ]
+
+        return DetectionHistoryResponse(
+            items=items,
+            total=total,
+            page=page,
+            limit=limit,
+        )
+
+    async def get_detection(self, detection_id: str, user_id: str) -> DetectionResult:
+        """Fetch single detection details."""
+        supabase = get_supabase()
+
+        resp = supabase.table("detections").select("*").eq("id", detection_id).eq("user_id", user_id).execute()
+        if not resp.data:
+            raise CustomAPIException(
+                message=f"Detection record '{detection_id}' not found.",
+                code="NOT_FOUND",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        data = resp.data[0]
+        return DetectionResult(
+            id=data["id"],
+            verdict=data["verdict"],
+            confidence=data["confidence"],
+            media_type=data["file_type"],
+            file_name=data["file_name"],
+            file_url=data.get("file_url") or "",
+            model_version=data.get("model_version") or settings.MODEL_VERSION,
+            processing_time_ms=data.get("processing_time_ms"),
+            created_at=data["created_at"],
+            details=data.get("metadata") or {},
+        )
+
+    async def delete_detection(self, detection_id: str, user_id: str) -> None:
+        """Delete detection record and clean up associated storage file."""
+        supabase = get_supabase()
+
+        resp = supabase.table("detections").select("file_url").eq("id", detection_id).eq("user_id", user_id).execute()
+        if not resp.data:
+            raise CustomAPIException(
+                message=f"Detection record '{detection_id}' not found.",
+                code="NOT_FOUND",
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+
+        file_url = resp.data[0].get("file_url") or ""
+
+        # Remove from database (cascades to detection_analytics)
+        supabase.table("detections").delete().eq("id", detection_id).execute()
+
+        # Clean up file in Supabase Storage if path can be extracted
+        if file_url and settings.SUPABASE_STORAGE_BUCKET in file_url:
+            try:
+                path_in_bucket = file_url.split(f"/{settings.SUPABASE_STORAGE_BUCKET}/")[-1]
+                supabase.storage.from_(settings.SUPABASE_STORAGE_BUCKET).remove([path_in_bucket])
+            except Exception as clean_err:
+                logger.warning(f"Could not delete storage file {file_url}: {clean_err}")
 
 
-# Module-level singleton
 detection_service = DetectionService()

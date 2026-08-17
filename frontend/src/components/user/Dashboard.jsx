@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileVideo, CheckCircle, AlertTriangle, Target, Upload, TrendingUp } from 'lucide-react';
+import { FileVideo, CheckCircle, AlertTriangle, Target, Upload, TrendingUp, BarChart2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { userApi, detectionApi } from '@/services/api';
 import { SkeletonLoader } from '@/components/common/LoadingSpinner';
@@ -21,10 +21,10 @@ const StatCard = ({ icon: Icon, title, value, change, colorClass }) => (
   </div>
 );
 
-const Dashboard = ({ setActiveView }) => {
+const Dashboard = ({ setActiveView, refreshTrigger }) => {
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
-  const [recentActivity, setRecentActivity] = useState([]);
+  const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
@@ -35,7 +35,7 @@ const Dashboard = ({ setActiveView }) => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [refreshTrigger]);
 
   const fetchDashboardData = async () => {
     try {
@@ -45,17 +45,14 @@ const Dashboard = ({ setActiveView }) => {
       // Fetch user statistics
       const statsResponse = await userApi.getStats();
       setStats(statsResponse.data);
-      
-      // Fetch recent detections
-      const historyResponse = await detectionApi.getHistory({ page: 1, limit: 5 });
-      const detections = historyResponse.data.items.map(item => ({
-        id: item.id,
-        file: item.file_name,
-        result: item.verdict.toLowerCase(),
-        confidence: (item.confidence * 100).toFixed(1),
-        time: formatTimeAgo(item.created_at)
-      }));
-      setRecentActivity(detections);
+
+      // Fetch analytics chart data (last 7 days)
+      try {
+        const chartResponse = await userApi.getAnalyticsChart(7);
+        setChartData(chartResponse.data);
+      } catch (chartErr) {
+        console.warn('Failed to fetch analytics chart data:', chartErr);
+      }
       
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
@@ -82,6 +79,15 @@ const Dashboard = ({ setActiveView }) => {
   const accuracy = totalDetections > 0 
     ? ((authenticCount / totalDetections) * 100).toFixed(1) 
     : 0;
+
+  // Compute chart parameters
+  const maxDetectionInPeriod = chartData?.detections?.length 
+    ? Math.max(...chartData.detections, 1) 
+    : 1;
+
+  const totalInPeriod = chartData?.detections?.reduce((a, b) => a + b, 0) || 0;
+  const authInPeriod = chartData?.authentic?.reduce((a, b) => a + b, 0) || 0;
+  const fakeInPeriod = chartData?.deepfake?.reduce((a, b) => a + b, 0) || 0;
 
   if (loading) {
     return (
@@ -153,50 +159,88 @@ const Dashboard = ({ setActiveView }) => {
         />
       </div>
 
-      {/* ── Middle Row ── */}
+      {/* ── Middle Row: Detection Activity Chart ── */}
       <div className="ud-middle-grid">
-        {/* Detection Activity */}
         <div className="ud-card ud-activity-card ud-activity-full-width">
-          <h2 className="ud-card-title">Detection Activity</h2>
-          <div className="ud-chart-placeholder">
-            <TrendingUp size={48} className="ud-chart-icon" />
-            <p className="ud-chart-label">Activity chart visualization</p>
-          </div>
-        </div>
-      </div>
+          <div className="ud-chart-container">
+            <div className="ud-chart-top">
+              <div>
+                <h2 className="ud-card-title" style={{ margin: 0 }}>Detection Activity</h2>
+                <p className="ud-chart-sub">Daily volume of scanned media over the last 7 days</p>
+              </div>
+              <div className="ud-chart-legend">
+                <span className="ud-legend-item">
+                  <span className="ud-legend-dot dot-authentic" />
+                  Authentic
+                </span>
+                <span className="ud-legend-item">
+                  <span className="ud-legend-dot dot-deepfake" />
+                  Deepfake
+                </span>
+              </div>
+            </div>
 
-      {/* ── Recent Activity Table ── */}
-      <div className="ud-card ud-table-card">
-        <h2 className="ud-card-title">Recent Detection Activity</h2>
-        <div className="ud-table-wrapper">
-          <table className="ud-table">
-            <thead>
-              <tr>
-                <th>File Name</th>
-                <th>Result</th>
-                <th>Confidence</th>
-                <th>Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentActivity.length > 0 ? (
-                recentActivity.map((item, idx) => (
-                  <tr key={item.id} className={idx === recentActivity.length - 1 ? 'last-row' : ''}>
-                    <td className="td-filename">{item.file}</td>
-                    <td><ResultBadge result={item.result} size="sm" /></td>
-                    <td className="td-confidence">{item.confidence}%</td>
-                    <td className="td-time">{item.time}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                    No detections yet. Upload your first media file to get started!
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+            {/* Visual Bar Chart */}
+            {chartData && chartData.labels && chartData.labels.length > 0 ? (
+              <div className="ud-chart-graph">
+                {chartData.labels.map((label, idx) => {
+                  const authVal = chartData.authentic?.[idx] || 0;
+                  const fakeVal = chartData.deepfake?.[idx] || 0;
+                  const totalVal = chartData.detections?.[idx] || 0;
+                  
+                  const authHeight = totalVal > 0 ? (authVal / maxDetectionInPeriod) * 100 : 4;
+                  const fakeHeight = totalVal > 0 ? (fakeVal / maxDetectionInPeriod) * 100 : 4;
+
+                  return (
+                    <div key={label} className="ud-chart-col">
+                      <div 
+                        className="ud-bars-wrap"
+                        title={`${label}: ${totalVal} Scans (${authVal} Authentic, ${fakeVal} Deepfake)`}
+                      >
+                        <div 
+                          className="ud-bar ud-bar-auth"
+                          style={{ height: `${Math.max(authHeight, 4)}%` }}
+                          title={`Authentic: ${authVal}`}
+                        />
+                        <div 
+                          className="ud-bar ud-bar-fake"
+                          style={{ height: `${Math.max(fakeHeight, 4)}%` }}
+                          title={`Deepfake: ${fakeVal}`}
+                        />
+                      </div>
+                      <span className="ud-col-date">{label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="ud-chart-graph" style={{ justifyContent: 'center', alignItems: 'center' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>No activity data for this period.</p>
+              </div>
+            )}
+
+            {/* Summary Footer */}
+            <div className="ud-chart-footer">
+              <div className="ud-cf-stat">
+                <span className="ud-cf-val">{totalInPeriod}</span>
+                <span className="ud-cf-lbl">Total Scans (7 Days)</span>
+              </div>
+              <div className="ud-cf-stat">
+                <span className="ud-cf-val" style={{ color: '#10b981' }}>{authInPeriod}</span>
+                <span className="ud-cf-lbl">Authentic Media</span>
+              </div>
+              <div className="ud-cf-stat">
+                <span className="ud-cf-val" style={{ color: '#ef4444' }}>{fakeInPeriod}</span>
+                <span className="ud-cf-lbl">Deepfakes Flagged</span>
+              </div>
+              <div className="ud-cf-stat">
+                <span className="ud-cf-val">
+                  {totalInPeriod > 0 ? ((authInPeriod / totalInPeriod) * 100).toFixed(1) : 100}%
+                </span>
+                <span className="ud-cf-lbl">Authenticity Rate</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

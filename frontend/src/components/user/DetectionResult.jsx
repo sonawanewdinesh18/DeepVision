@@ -5,21 +5,27 @@ import toast from '@/utils/toast';
 import { InlineLoader } from '@/components/common/LoadingSpinner';
 import './DetectionResult.css';
 
-const DetectionResult = ({ setActiveView, detectionId }) => {
+const DetectionResult = ({ setActiveView, detectionId, initialResult }) => {
   const [selected, setSelected] = useState(null);
   const [comment, setComment] = useState('');
   const [submitted, setSubmitted] = useState(false);
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [result, setResult] = useState(initialResult || null);
+  const [loading, setLoading] = useState(!initialResult);
 
   useEffect(() => {
+    if (initialResult) {
+      setResult(initialResult);
+      setLoading(false);
+      return;
+    }
+
     if (detectionId) {
       fetchDetectionResult();
     } else {
       // Check if there's a recent detection
       fetchLatestDetection();
     }
-  }, [detectionId]);
+  }, [detectionId, initialResult]);
 
   const fetchDetectionResult = async () => {
     try {
@@ -34,7 +40,7 @@ const DetectionResult = ({ setActiveView, detectionId }) => {
         processingTime: response.data.processing_time_ms 
           ? `${(response.data.processing_time_ms / 1000).toFixed(1)}s` 
           : '2.4s',
-        fileUrl: response.data.file_url
+        fileUrl: response.data.file_url || ''
       });
     } catch (error) {
       console.error('Failed to fetch detection result:', error);
@@ -50,16 +56,37 @@ const DetectionResult = ({ setActiveView, detectionId }) => {
       setLoading(true);
       const response = await detectionApi.getHistory({ page: 1, limit: 1 });
       
-      if (response.data.items.length > 0) {
+      if (response.data?.items?.length > 0) {
         const latest = response.data.items[0];
-        setResult({
-          id: latest.id,
-          file: latest.file_name,
-          type: latest.media_type,
-          result: latest.verdict.toLowerCase(),
-          confidence: (latest.confidence * 100).toFixed(1),
-          processingTime: '2.4s'
-        });
+        
+        // Fetch full detection record if possible to ensure complete file_url
+        try {
+          const detailRes = await detectionApi.getResult(latest.id);
+          const data = detailRes.data;
+          setResult({
+            id: data.id,
+            file: data.file_name,
+            type: data.media_type,
+            result: data.verdict.toLowerCase(),
+            confidence: (data.confidence * 100).toFixed(1),
+            processingTime: data.processing_time_ms 
+              ? `${(data.processing_time_ms / 1000).toFixed(1)}s` 
+              : '2.4s',
+            fileUrl: data.file_url || latest.file_url || ''
+          });
+        } catch (detailErr) {
+          setResult({
+            id: latest.id,
+            file: latest.file_name,
+            type: latest.media_type,
+            result: latest.verdict.toLowerCase(),
+            confidence: (latest.confidence * 100).toFixed(1),
+            processingTime: latest.processing_time_ms 
+              ? `${(latest.processing_time_ms / 1000).toFixed(1)}s` 
+              : '2.4s',
+            fileUrl: latest.file_url || ''
+          });
+        }
       } else {
         setResult(null);
       }

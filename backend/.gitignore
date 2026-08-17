@@ -1,4 +1,4 @@
-# ── Python ──────────────────────────────────────────────────
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -10,36 +10,33 @@ build/
 .eggs/
 .venv/
 venv/
-dvvenv/
 env/
 ENV/
 
-# ── Environment ──────────────────────────────────────────────
+# Environment
 .env
 !.env.example
 
-# ── Editor ───────────────────────────────────────────────────
+# Editors
 .vscode/
 .idea/
 *.swp
 *.swo
-*.swn
 .DS_Store
 Thumbs.db
 
-# ── Logs ─────────────────────────────────────────────────────
+# Logs & Temp
 *.log
-*.txt.bak
-install_log.txt
+*.tmp
+temp_uploads/
 
-# ── AI Models (large binaries — use Git LFS or cloud storage) ─
-*.pth
-*.pt
-*.onnx
-*.h5
-*.pkl
+# Large Model Binaries (stored in models/ or external storage)
+models/*.pth
+models/*.pt
+models/*.onnx
+!models/README.md
 
-# ── Tests ────────────────────────────────────────────────────
+# Tests & Coverage
 .pytest_cache/
 .coverage
 htmlcov/

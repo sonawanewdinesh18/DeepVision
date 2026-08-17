@@ -3,8 +3,8 @@ import { X, Clock, Pin, Trash2, RotateCcw, MoreVertical } from 'lucide-react';
 import { detectionApi } from '@/services/api';
 import './HistoryPanel.css';
 
-const HistoryPanel = ({ isOpen, onClose, setActiveView }) => {
-  const [selectedId, setSelectedId] = useState(null);
+const HistoryPanel = ({ isOpen, onClose, setActiveView, onSelectDetection, selectedDetectionId }) => {
+  const [selectedId, setSelectedId] = useState(selectedDetectionId || null);
   const [historyItems, setHistoryItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openMenuId, setOpenMenuId] = useState(null);
@@ -17,6 +17,12 @@ const HistoryPanel = ({ isOpen, onClose, setActiveView }) => {
     const saved = localStorage.getItem('hiddenDetections');
     return saved ? JSON.parse(saved) : [];
   });
+
+  useEffect(() => {
+    if (selectedDetectionId) {
+      setSelectedId(selectedDetectionId);
+    }
+  }, [selectedDetectionId]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -105,8 +111,12 @@ const HistoryPanel = ({ isOpen, onClose, setActiveView }) => {
 
   const handleItemClick = (item) => {
     setSelectedId(item.id);
-    setActiveView?.('result');
-    onClose();
+    if (onSelectDetection) {
+      onSelectDetection(item.id);
+    } else {
+      setActiveView?.('result', item.id);
+      onClose();
+    }
   };
 
   return (

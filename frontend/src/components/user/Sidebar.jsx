@@ -40,7 +40,7 @@ const menuItems = [
   },
 ];
 
-const Sidebar = ({ isOpen, activeView, setActiveView }) => {
+const Sidebar = ({ isOpen, activeView, setActiveView, refreshTrigger }) => {
   const { user } = useAuth();
   const [historyOpen, setHistoryOpen] = useState(true);
   const [selectedId, setSelectedId] = useState(null);
@@ -68,11 +68,12 @@ const Sidebar = ({ isOpen, activeView, setActiveView }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Always fetch real-time history from database on view change or refresh trigger
   useEffect(() => {
-    if (historyOpen && historyItems.length === 0) {
+    if (historyOpen) {
       fetchHistory();
     }
-  }, [historyOpen]);
+  }, [historyOpen, activeView, refreshTrigger]);
 
   const fetchHistory = async () => {
     try {
@@ -96,7 +97,7 @@ const Sidebar = ({ isOpen, activeView, setActiveView }) => {
 
   const handleHistoryClick = (item) => {
     setSelectedId(item.id);
-    setActiveView('result');
+    setActiveView('result', item.id);
   };
 
   const togglePin = (itemId, e) => {

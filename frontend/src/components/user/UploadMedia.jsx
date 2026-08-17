@@ -88,9 +88,23 @@ const UploadMedia = ({ setActiveView }) => {
       
       toast.success('Analysis complete!');
       
+      // Create local preview URL as immediate fallback
+      const localPreviewUrl = URL.createObjectURL(file);
+      const detectionData = response.data;
+      
       // Navigate to results after a brief delay
       setTimeout(() => {
-        setActiveView('result');
+        setActiveView('result', detectionData.id, {
+          id: detectionData.id,
+          file: detectionData.file_name,
+          type: detectionData.media_type,
+          result: detectionData.verdict.toLowerCase(),
+          confidence: (detectionData.confidence * 100).toFixed(1),
+          processingTime: detectionData.processing_time_ms 
+            ? `${(detectionData.processing_time_ms / 1000).toFixed(1)}s` 
+            : '1.2s',
+          fileUrl: detectionData.file_url || localPreviewUrl
+        });
       }, 500);
       
     } catch (err) {
