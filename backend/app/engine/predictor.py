@@ -34,9 +34,23 @@ _transform = T.Compose([
     ),
 ])
 
-# Dual OpenCV Face Cascades for maximum recall on portraits, tilted, and smiling faces
-_face_cascade_alt2 = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_alt2.xml")
-_face_cascade_default = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+# Lazy-loaded OpenCV Face Cascades for maximum recall on portraits, tilted, and smiling faces
+_face_cascade_alt2 = None
+_face_cascade_default = None
+
+
+def _get_cascades():
+    """Lazily load Haar cascades with safe fallback."""
+    global _face_cascade_alt2, _face_cascade_default
+    if _face_cascade_alt2 is None:
+        try:
+            cascade_dir = getattr(cv2.data, "haarcascades", "") if hasattr(cv2, "data") else ""
+            if hasattr(cv2, "CascadeClassifier"):
+                _face_cascade_alt2 = cv2.CascadeClassifier(cascade_dir + "haarcascade_frontalface_alt2.xml")
+                _face_cascade_default = cv2.CascadeClassifier(cascade_dir + "haarcascade_frontalface_default.xml")
+        except Exception as exc:
+            logger.debug(f"OpenCV cascade loading note: {exc}")
+    return _face_cascade_alt2, _face_cascade_default
 
 
 def _detect_and_crop_face(pil_img: Image.Image) -> Tuple[Image.Image, bool, List[int]]:
@@ -45,6 +59,10 @@ def _detect_and_crop_face(pil_img: Image.Image) -> Tuple[Image.Image, bool, List
     Ensures the HybridViTCNN processes the facial region matching its training distribution.
     """
     try:
+        cascade_alt2, cascade_default = _get_cascades()
+        if cascade_alt2 is None or cascade_default is None:
+            return pil_img, False, []
+
         np_img = np.array(pil_img)
         if len(np_img.shape) == 2:
             gray = np_img
@@ -55,7 +73,7 @@ def _detect_and_crop_face(pil_img: Image.Image) -> Tuple[Image.Image, bool, List
             gray = cv2.cvtColor(np_img, cv2.COLOR_RGB2GRAY)
 
         # 1. First attempt: alt2 cascade (higher accuracy on realistic faces)
-        faces = _face_cascade_alt2.detectMultiScale(
+        faces = cascade_alt2.detectMultiScale(
             gray,
             scaleFactor=1.08,
             minNeighbors=4,
@@ -64,7 +82,7 @@ def _detect_and_crop_face(pil_img: Image.Image) -> Tuple[Image.Image, bool, List
 
         # 2. Fallback attempt: default cascade
         if len(faces) == 0:
-            faces = _face_cascade_default.detectMultiScale(
+            faces = cascade_default.detectMultiScale(
                 gray,
                 scaleFactor=1.1,
                 minNeighbors=3,
