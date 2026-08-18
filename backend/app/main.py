@@ -97,8 +97,8 @@ def create_application() -> FastAPI:
     app.include_router(api_v1_router)
 
     # 4. Health & Status Endpoints
-    @app.get("/", tags=["Health"], summary="API Root / Status")
-    @app.get("/health", tags=["Health"], summary="Health check probe")
+    @app.api_route("/", methods=["GET", "HEAD"], tags=["Health"], summary="API Root / Status")
+    @app.api_route("/health", methods=["GET", "HEAD"], tags=["Health"], summary="Health check probe")
     def health_check():
         return {
             "status": "healthy",
