@@ -7,7 +7,7 @@ Values are dynamically loaded from environment variables or .env file.
 
 from functools import lru_cache
 from pathlib import Path
-from typing import List, Union
+from typing import List, Union, Optional
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     # ── AI Model Configuration ────────────────────────────────
     MODEL_PATH: str = "./models/Hybrid_vit.pth"
     MODEL_VERSION: str = "HybridViTCNN-v1.0"
+    MODEL_DOWNLOAD_URL: Optional[str] = None
     CONFIDENCE_THRESHOLD: float = 0.5
     VIDEO_SAMPLE_FRAMES: int = 16
     DEVICE: str = "auto"  # 'auto', 'cuda', 'cpu', 'mps'

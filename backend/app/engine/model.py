@@ -113,12 +113,19 @@ def load_model() -> Tuple[HybridViTCNN, torch.device]:
     model_path = settings.resolve_model_path()
 
     if not model_path.exists():
-        err_msg = (
-            f"HybridViTCNN weights file not found at: '{model_path}'. "
-            "Please ensure 'Hybrid_vit.pth' is placed in backend/models/ or configured via MODEL_PATH."
-        )
-        logger.error(err_msg)
-        raise ModelLoadError(err_msg)
+        if settings.MODEL_DOWNLOAD_URL:
+            logger.info(f"Downloading model weights from {settings.MODEL_DOWNLOAD_URL} to {model_path}...")
+            model_path.parent.mkdir(parents=True, exist_ok=True)
+            import urllib.request
+            urllib.request.urlretrieve(settings.MODEL_DOWNLOAD_URL, str(model_path))
+            logger.info("Model weights download completed.")
+        else:
+            err_msg = (
+                f"HybridViTCNN weights file not found at: '{model_path}'. "
+                "Please ensure 'Hybrid_vit.pth' is placed in backend/models/ or configure MODEL_DOWNLOAD_URL in environment."
+            )
+            logger.error(err_msg)
+            raise ModelLoadError(err_msg)
 
     logger.info(f"Loading HybridViTCNN weights from {model_path} onto device '{device}'...")
     start_time = time.perf_counter()
