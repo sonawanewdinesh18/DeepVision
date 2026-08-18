@@ -28,9 +28,9 @@ def get_supabase() -> Client:
         key = settings.SUPABASE_SERVICE_ROLE_KEY or settings.SUPABASE_ANON_KEY
 
         if not url or not key:
-            logger.warning(
-                "Supabase URL or Key is not configured. Database operations will fail."
-            )
+            err_msg = "Supabase URL or Key is missing. Set SUPABASE_URL and SUPABASE_ANON_KEY in your environment."
+            logger.warning(err_msg)
+            raise RuntimeError(err_msg)
 
         _supabase_client = create_client(url, key)
 
