@@ -72,16 +72,19 @@ def create_application() -> FastAPI:
     # 1. Global Exception Handlers
     setup_exception_handlers(app)
 
-    # 2. CORS Middleware (Supports any web origin, mobile scheme, or wildcard)
+    # 2. CORS Middleware (Supports Vercel deployments, custom domains, and local dev with credentials)
     origins = settings.ALLOWED_ORIGINS
-    allow_all = "*" in origins or origins == ["*"]
+    if isinstance(origins, str):
+        origins = [origins]
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"] if allow_all else origins,
-        allow_credentials=not allow_all,
+        allow_origins=origins if origins != ["*"] else ["*"],
+        allow_origin_regex=r"^https://.*\.vercel\.app$|^https://.*\.onrender\.com$|^http://localhost(:\d+)?$|^http://127\.0\.0\.1(:\d+)?$",
+        allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+        expose_headers=["*"],
     )
 
     # 3. Real-Time No-Cache Middleware (Ensures clients always receive fresh database data)

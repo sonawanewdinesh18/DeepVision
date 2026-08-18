@@ -20,8 +20,10 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
 
     # ── CORS / Allowed Origins ────────────────────────────────
-    # Accepts comma-separated string ("http://localhost:5173,http://localhost:3000") or list
+    # Accepts comma-separated string ("https://deep-vision-five.vercel.app,http://localhost:5173") or list
     ALLOWED_ORIGINS: Union[str, List[str]] = [
+        "https://deep-vision-five.vercel.app",
+        "https://deepvision-five.vercel.app",
         "http://localhost:5173",
         "http://localhost:3000",
         "http://127.0.0.1:5173",
