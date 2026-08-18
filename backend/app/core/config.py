@@ -67,28 +67,34 @@ class Settings(BaseSettings):
         """
         Intelligently locate the Hybrid_vit.pth model weights.
         Checks:
-          1. Direct path configured in MODEL_PATH
-          2. backend/models/Hybrid_vit.pth
-          3. Sibling ai_models/Hybrid_vit.pth (Monorepo root)
+          1. Sanitizes if URL was passed to MODEL_PATH
+          2. Direct path configured in MODEL_PATH
+          3. backend/models/Hybrid_vit.pth
+          4. Sibling ai_models/Hybrid_vit.pth (Monorepo root)
         """
-        # 1. Configured path
+        backend_dir = Path(__file__).resolve().parent.parent.parent
+
+        # 1. Sanitize if a web URL was passed to MODEL_PATH
+        if self.MODEL_PATH.startswith("http://") or self.MODEL_PATH.startswith("https://"):
+            return (backend_dir / "models" / "Hybrid_vit.pth").resolve()
+
+        # 2. Configured path
         configured = Path(self.MODEL_PATH)
         if configured.is_file():
             return configured.resolve()
 
-        # 2. Local backend/models/ directory
-        backend_dir = Path(__file__).resolve().parent.parent.parent
+        # 3. Local backend/models/ directory
         local_model = backend_dir / "models" / "Hybrid_vit.pth"
         if local_model.is_file():
             return local_model.resolve()
 
-        # 3. Monorepo root ai_models/ directory
+        # 4. Monorepo root ai_models/ directory
         monorepo_model = backend_dir.parent / "ai_models" / "Hybrid_vit.pth"
         if monorepo_model.is_file():
             return monorepo_model.resolve()
 
-        # Fallback to configured path (will trigger clear error on model load)
-        return configured.resolve()
+        # Fallback to backend/models/Hybrid_vit.pth
+        return (backend_dir / "models" / "Hybrid_vit.pth").resolve()
 
 
 @lru_cache()

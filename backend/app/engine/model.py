@@ -164,16 +164,23 @@ def load_model() -> Tuple[HybridViTCNN, torch.device]:
     try:
         net = HybridViTCNN(num_classes=2)
         
-        # Load state dictionary with CPU mapping to conserve memory
+        # Zero-copy memory-mapped state loading to stay strictly under 512MB RAM
         try:
-            state = torch.load(model_path, map_location="cpu", weights_only=True)
+            state = torch.load(model_path, map_location="cpu", mmap=True, weights_only=True)
         except Exception:
-            state = torch.load(model_path, map_location="cpu", weights_only=False)
+            try:
+                state = torch.load(model_path, map_location="cpu", mmap=True, weights_only=False)
+            except Exception:
+                state = torch.load(model_path, map_location="cpu", weights_only=False)
 
         if isinstance(state, dict) and "model_state_dict" in state:
             state = state["model_state_dict"]
 
-        net.load_state_dict(state, strict=True)
+        try:
+            net.load_state_dict(state, assign=True)
+        except Exception:
+            net.load_state_dict(state, strict=True)
+
         del state
         gc.collect()
 
