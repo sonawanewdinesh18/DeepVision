@@ -210,20 +210,20 @@ def load_model() -> Tuple[HybridViTCNN, torch.device]:
 
 
 def get_model_status() -> dict:
-    """Return runtime diagnostic status for the AI model."""
-    try:
-        model, device = load_model()
+    """Return runtime diagnostic status for the AI model without blocking."""
+    global _model_instance, _device_instance
+    if _model_instance is not None and _device_instance is not None:
         return {
             "loaded": True,
             "version": settings.MODEL_VERSION,
-            "device": str(device),
+            "device": str(_device_instance),
             "weights_path": str(settings.resolve_model_path()),
             "status": "ready"
         }
-    except Exception as exc:
-        return {
-            "loaded": False,
-            "version": settings.MODEL_VERSION,
-            "error": str(exc),
-            "status": "unavailable"
-        }
+    return {
+        "loaded": False,
+        "version": settings.MODEL_VERSION,
+        "device": "cpu",
+        "weights_path": str(settings.resolve_model_path()),
+        "status": "standby (ready for on-demand inference)"
+    }

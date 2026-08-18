@@ -35,20 +35,11 @@ import asyncio
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     Lifespan events:
-      - Startup: Immediate port binding + non-blocking background model initialization.
+      - Startup: Immediate port binding and instant API readiness.
       - Shutdown: Release GPU/CPU resources.
     """
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION} ({settings.ENVIRONMENT})...")
-
-    # Pre-warm the quantized model in a non-blocking background thread
-    async def _preload_model_task():
-        try:
-            await asyncio.to_thread(load_model)
-            logger.info("HybridViTCNN model pre-warmed and ready for inference.")
-        except Exception as exc:
-            logger.warning(f"Model pre-warming note: {exc}. Model will load on demand.")
-
-    asyncio.create_task(_preload_model_task())
+    logger.info("Server ready. AI models will load on-demand with INT8 quantization.")
 
     yield
 
