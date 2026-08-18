@@ -99,10 +99,14 @@ def resolve_device() -> torch.device:
     return torch.device("cpu")
 
 
+import gc
+import urllib.request
+
+
 def load_model() -> Tuple[HybridViTCNN, torch.device]:
     """
     Thread-safe singleton model loader.
-    Loads Hybrid_vit.pth weights once into memory and returns (model, device).
+    Loads Hybrid_vit.pth weights once into memory with strict RAM limits for cloud free-tier hosting.
     """
     global _model_instance, _device_instance
 
@@ -110,19 +114,46 @@ def load_model() -> Tuple[HybridViTCNN, torch.device]:
         return _model_instance, _device_instance
 
     device = resolve_device()
+    if device.type == "cpu":
+        # Restrict CPU threads to prevent memory fragmentation on low-RAM containers
+        torch.set_num_threads(1)
+
     model_path = settings.resolve_model_path()
 
+    # If model file is not present locally, stream download it in 4MB chunks
     if not model_path.exists():
-        if settings.MODEL_DOWNLOAD_URL:
-            logger.info(f"Downloading model weights from {settings.MODEL_DOWNLOAD_URL} to {model_path}...")
+        download_url = settings.MODEL_DOWNLOAD_URL
+        if download_url:
+            logger.info(f"Streaming model weights download from: {download_url}")
             model_path.parent.mkdir(parents=True, exist_ok=True)
-            import urllib.request
-            urllib.request.urlretrieve(settings.MODEL_DOWNLOAD_URL, str(model_path))
-            logger.info("Model weights download completed.")
+            tmp_path = model_path.with_suffix(".tmp")
+            
+            try:
+                req = urllib.request.Request(
+                    download_url,
+                    headers={"User-Agent": "DeepVision-FastAPI-Server/1.0"}
+                )
+                with urllib.request.urlopen(req) as response, open(tmp_path, "wb") as out_file:
+                    while True:
+                        chunk = response.read(4 * 1024 * 1024)  # 4 MB chunk
+                        if not chunk:
+                            break
+                        out_file.write(chunk)
+                
+                if tmp_path.exists() and tmp_path.stat().st_size > 1024 * 1024:
+                    tmp_path.replace(model_path)
+                    logger.info(f"Model weights successfully saved to: {model_path} ({model_path.stat().st_size / (1024*1024):.1f} MB)")
+                else:
+                    raise ModelLoadError("Downloaded model weights file is empty or corrupted.")
+            except Exception as dl_err:
+                if tmp_path.exists():
+                    tmp_path.unlink(missing_ok=True)
+                logger.error(f"Failed to download model weights from {download_url}: {dl_err}")
+                raise ModelLoadError(f"Failed to download model weights: {dl_err}") from dl_err
         else:
             err_msg = (
                 f"HybridViTCNN weights file not found at: '{model_path}'. "
-                "Please ensure 'Hybrid_vit.pth' is placed in backend/models/ or configure MODEL_DOWNLOAD_URL in environment."
+                "Please configure MODEL_DOWNLOAD_URL in your environment variables."
             )
             logger.error(err_msg)
             raise ModelLoadError(err_msg)
@@ -133,17 +164,19 @@ def load_model() -> Tuple[HybridViTCNN, torch.device]:
     try:
         net = HybridViTCNN(num_classes=2)
         
-        # Load weights safely
+        # Load state dictionary with CPU mapping to conserve memory
         try:
-            state = torch.load(model_path, map_location=device, weights_only=True)
+            state = torch.load(model_path, map_location="cpu", weights_only=True)
         except Exception:
-            state = torch.load(model_path, map_location=device, weights_only=False)
+            state = torch.load(model_path, map_location="cpu", weights_only=False)
 
-        # Support both state_dict and checkpoint dictionary formats
         if isinstance(state, dict) and "model_state_dict" in state:
             state = state["model_state_dict"]
 
-        net.load_state_dict(state)
+        net.load_state_dict(state, strict=True)
+        del state
+        gc.collect()
+
         net.to(device)
         net.eval()
 

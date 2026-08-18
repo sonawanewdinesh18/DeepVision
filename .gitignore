@@ -52,8 +52,10 @@ yarn-error.log*
 *.h5
 *.pkl
 *.onnx
+*.zip
 ai_models/*.pth
 ai_models/*.pt
+ai_models/*.zip
 
 # Temporary files
 *.tmp
@@ -77,3 +79,4 @@ build/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+ai_models/*.zip

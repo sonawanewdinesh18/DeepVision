@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     # ── AI Model Configuration ────────────────────────────────
     MODEL_PATH: str = "./models/Hybrid_vit.pth"
     MODEL_VERSION: str = "HybridViTCNN-v1.0"
-    MODEL_DOWNLOAD_URL: Optional[str] = None
+    MODEL_DOWNLOAD_URL: Optional[str] = "https://huggingface.co/Dinesh-18-AIML/deepvision-hybrid-vit/resolve/main/Hybrid_vit.pth"
     CONFIDENCE_THRESHOLD: float = 0.5
     VIDEO_SAMPLE_FRAMES: int = 16
     DEVICE: str = "auto"  # 'auto', 'cuda', 'cpu', 'mps'

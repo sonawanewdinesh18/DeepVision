@@ -360,8 +360,8 @@ Open **`http://localhost:5173`** in your browser.
 *AI/ML Engineer & Full-Stack Developer*
 
 - **GitHub**: [@sonawanedinesh18](https://github.com/sonawanedinesh18)
-- **Email**: `sonawanedinesh1836@gmail.com`
-- **LinkedIn**: [Dinesh Sonawane](https://linkedin.com)
+- **Email**: `dineshsonawanew2004@gmail.com `
+- **LinkedIn**: [Dinesh Sonawane](https://www.linkedin.com/in/dinesh-sonawane-827360343/)
 
 ---
 

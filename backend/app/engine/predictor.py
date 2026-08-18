@@ -7,6 +7,7 @@ Uses PyTorch HybridViTCNN with dual-cascade face localization and standard Image
 
 import os
 import io
+import gc
 import time
 import tempfile
 import logging
@@ -113,7 +114,7 @@ def predict_image(image_bytes: bytes) -> Tuple[float, str, Dict[str, Any]]:
         tensor = _transform(eval_image).unsqueeze(0).to(device)  # Shape: [1, 3, 224, 224]
 
         start_time = time.perf_counter()
-        with torch.no_grad():
+        with torch.inference_mode():
             logits = model(tensor)
             probabilities = torch.softmax(logits, dim=1)[0]
         inference_ms = int((time.perf_counter() - start_time) * 1000)
@@ -121,6 +122,9 @@ def predict_image(image_bytes: bytes) -> Tuple[float, str, Dict[str, Any]]:
         # Class 0: Fake, Class 1: Real (from ImageFolder dataset mapping: {'fake': 0, 'real': 1})
         fake_prob = float(probabilities[0].item())
         real_prob = float(probabilities[1].item())
+
+        del tensor, logits, probabilities
+        gc.collect()
 
         is_fake = fake_prob >= settings.CONFIDENCE_THRESHOLD
         verdict = "FAKE" if is_fake else "REAL"
@@ -218,7 +222,7 @@ def predict_video(video_bytes: bytes) -> Tuple[float, str, Dict[str, Any]]:
         _transform(f) for f in processed_frames
     ]).to(device)
 
-    with torch.no_grad():
+    with torch.inference_mode():
         logits = model(tensors)
         probs = torch.softmax(logits, dim=1)
 
@@ -230,6 +234,9 @@ def predict_video(video_bytes: bytes) -> Tuple[float, str, Dict[str, Any]]:
             "fake_probability": round(fake_p, 4),
             "verdict": "FAKE" if fake_p >= settings.CONFIDENCE_THRESHOLD else "REAL",
         })
+
+    del tensors, logits, probs
+    gc.collect()
 
     inference_ms = int((time.perf_counter() - start_time) * 1000)
     avg_fake = float(np.mean(fake_probs))
