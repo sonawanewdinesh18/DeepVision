@@ -26,28 +26,29 @@ logging.basicConfig(
 logger = logging.getLogger("deepvision")
 
 
+import asyncio
+
+
 # ── Application Lifespan ──────────────────────────────────────
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     Lifespan events:
-      - Startup: Pre-load AI model weights into memory for instant inference.
-      - Shutdown: Release GPU memory & resources.
+      - Startup: Immediate port binding + non-blocking background model initialization.
+      - Shutdown: Release GPU/CPU resources.
     """
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION} ({settings.ENVIRONMENT})...")
 
-    # Attempt to pre-warm the HybridViTCNN model
-    try:
-        model, device = load_model()
-        logger.info(f"HybridViTCNN model pre-warmed successfully on {device}")
-    except ModelLoadError as exc:
-        logger.warning(
-            f"Model weights could not be pre-loaded at startup: {exc}. "
-            "Inference requests will attempt to load the model on demand."
-        )
-    except Exception as exc:
-        logger.error(f"Unexpected error during model initialization: {exc}")
+    # Pre-warm the quantized model in a non-blocking background thread
+    async def _preload_model_task():
+        try:
+            await asyncio.to_thread(load_model)
+            logger.info("HybridViTCNN model pre-warmed and ready for inference.")
+        except Exception as exc:
+            logger.warning(f"Model pre-warming note: {exc}. Model will load on demand.")
+
+    asyncio.create_task(_preload_model_task())
 
     yield
 

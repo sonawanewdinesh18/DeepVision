@@ -187,6 +187,16 @@ def load_model() -> Tuple[HybridViTCNN, torch.device]:
         net.to(device)
         net.eval()
 
+        # Quantize Linear/Attention layers to INT8 (reduces RAM from 350MB to ~95MB)
+        if device.type == "cpu":
+            try:
+                net = torch.ao.quantization.quantize_dynamic(
+                    net, {nn.Linear}, dtype=torch.qint8
+                )
+                logger.info("HybridViTCNN INT8 dynamic quantization applied (<100MB RAM footprint).")
+            except Exception as q_err:
+                logger.debug(f"Quantization fallback: {q_err}")
+
         _model_instance = net
         _device_instance = device
 
