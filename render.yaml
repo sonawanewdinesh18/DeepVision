@@ -16,8 +16,6 @@ services:
         value: "https://deep-vision-five.vercel.app,https://deepvision-five.vercel.app,http://localhost:5173"
       - key: SUPABASE_STORAGE_BUCKET
         value: "detection-media"
-      # Model weights are baked into the Docker image at build time (downloaded from HF).
-      # model.py applies dynamic INT8 quantization automatically on first load.
       - key: MODEL_PATH
         value: "./models/Hybrid_vit.pth"
       - key: MODEL_VERSION
@@ -34,8 +32,16 @@ services:
         value: "104857600"
       - key: MAX_VIDEO_DURATION_SECONDS
         value: "120"
-      # ── Secrets: add these in Render Dashboard → Environment ──────────────
-      # Never commit real secret values to git. Set them via the Render UI.
+      # ── HF Space inference API (set to true to skip local PyTorch on Render) ──
+      # Set USE_HF_API=true and HF_API_URL to your Space URL in Render dashboard.
+      # This lets Render run with zero PyTorch RAM — model runs on HF Space instead.
+      - key: USE_HF_API
+        sync: false
+      - key: HF_API_URL
+        sync: false
+      - key: HF_API_TOKEN
+        sync: false
+      # ── Supabase secrets (set in Render Dashboard → Environment) ──────────
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY

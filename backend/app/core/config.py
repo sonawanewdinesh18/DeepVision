@@ -50,8 +50,7 @@ class Settings(BaseSettings):
     # Set via env var: MODEL_PATH=./models/Hybrid_vit_int8.pth
     MODEL_PATH: str = "./models/Hybrid_vit.pth"
     MODEL_VERSION: str = "HybridViTCNN-v1.0"
-    # Download URL used only as a fallback if the model file is missing at runtime.
-    # In Docker deployments the weights are bundled into the image, so this is never hit.
+    # Primary download URL — full model from Hugging Face
     MODEL_DOWNLOAD_URL: Optional[str] = "https://huggingface.co/Dinesh-18-AIML/deepvision-hybrid-vit/resolve/main/Hybrid_vit.pth"
     CONFIDENCE_THRESHOLD: float = 0.5
     VIDEO_SAMPLE_FRAMES: int = 8   # Reduced for free-tier memory headroom
