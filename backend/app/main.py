@@ -35,15 +35,15 @@ import asyncio
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     Lifespan events:
-      - Startup: Immediate port binding and instant API readiness.
+      - Startup: Immediate port binding and background model pre-warming.
       - Shutdown: Release GPU/CPU resources.
     """
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION} ({settings.ENVIRONMENT})...")
-    logger.info("Server ready. AI models will load on-demand with INT8 quantization.")
-
+    # Initiate non-blocking model download and warm-up in background thread
+    asyncio.create_task(asyncio.to_thread(load_model))
     yield
-
     logger.info("Shutting down DeepVision API...")
+
 
 
 # ── FastAPI App Instance ──────────────────────────────────────

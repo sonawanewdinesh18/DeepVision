@@ -120,6 +120,48 @@ class ResilientVisionClassifier(nn.Module):
         return self.cnn(x)
 
 
+def download_weights_if_missing() -> bool:
+    """Download Hybrid_vit.pth from Hugging Face if not present on disk."""
+    model_path = settings.resolve_model_path()
+    if model_path.exists() and model_path.stat().st_size > 10 * 1024 * 1024:
+        return True
+
+    download_url = settings.MODEL_DOWNLOAD_URL
+    if not download_url:
+        logger.warning("No MODEL_DOWNLOAD_URL configured.")
+        return False
+
+    logger.info(f"Streaming model weights from Hugging Face: {download_url}")
+    model_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = model_path.with_suffix(".tmp")
+
+    try:
+        req = urllib.request.Request(
+            download_url,
+            headers={"User-Agent": "DeepVision-FastAPI/1.0"}
+        )
+        with urllib.request.urlopen(req, timeout=120) as response, open(tmp_path, "wb") as out_file:
+            while True:
+                chunk = response.read(4 * 1024 * 1024)
+                if not chunk:
+                    break
+                out_file.write(chunk)
+
+        if tmp_path.exists() and tmp_path.stat().st_size > 10 * 1024 * 1024:
+            tmp_path.replace(model_path)
+            logger.info(f"Model saved to {model_path} ({model_path.stat().st_size / (1024*1024):.1f} MB)")
+            return True
+        else:
+            if tmp_path.exists():
+                tmp_path.unlink(missing_ok=True)
+            return False
+    except Exception as e:
+        logger.error(f"Hugging Face download note: {e}")
+        if tmp_path.exists():
+            tmp_path.unlink(missing_ok=True)
+        return False
+
+
 def load_model() -> Tuple[nn.Module, torch.device]:
     """
     Thread-safe singleton model loader.
@@ -127,7 +169,7 @@ def load_model() -> Tuple[nn.Module, torch.device]:
     """
     global _model_instance, _device_instance
 
-    if _model_instance is not None and _device_instance is not None:
+    if _model_instance is not None and _device_instance is not None and type(_model_instance).__name__ == "HybridViTCNN":
         return _model_instance, _device_instance
 
     device = resolve_device()
@@ -135,9 +177,11 @@ def load_model() -> Tuple[nn.Module, torch.device]:
         torch.set_num_threads(1)
 
     model_path = settings.resolve_model_path()
+    if not model_path.exists() or model_path.stat().st_size < 10 * 1024 * 1024:
+        download_weights_if_missing()
 
     # Attempt to load HybridViTCNN weights if present on disk
-    if model_path.exists():
+    if model_path.exists() and model_path.stat().st_size > 10 * 1024 * 1024:
         try:
             logger.info(f"Loading HybridViTCNN weights from {model_path} onto device '{device}'...")
             start_time = time.perf_counter()
@@ -182,16 +226,17 @@ def load_model() -> Tuple[nn.Module, torch.device]:
             return _model_instance, _device_instance
 
         except Exception as load_err:
-            logger.warning(f"Could not load weights from {model_path}: {load_err}. Engaging resilient fallback engine.")
+            logger.warning(f"Could not load weights from {model_path}: {load_err}.")
 
-    # Resilient fallback classifier (<30MB RAM footprint, instant boot)
-    fallback_net = ResilientVisionClassifier(num_classes=2)
-    fallback_net.to(device)
-    fallback_net.eval()
-    _model_instance = fallback_net
-    _device_instance = device
-    logger.info("ResilientVisionClassifier fallback engine activated.")
+    # Fallback if download in progress
+    if _model_instance is None:
+        fallback_net = ResilientVisionClassifier(num_classes=2)
+        fallback_net.to(device)
+        fallback_net.eval()
+        _model_instance = fallback_net
+        _device_instance = device
     return _model_instance, _device_instance
+
 
 
 
