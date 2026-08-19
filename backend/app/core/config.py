@@ -45,12 +45,11 @@ class Settings(BaseSettings):
     SUPABASE_STORAGE_BUCKET: str = "detection-media"
 
     # ── AI Model ──────────────────────────────────────────────
-    # Points to Hybrid_vit.pth — the only file in the HF repo.
-    # The Dockerfile downloads it at build time and places it at /app/models/.
-    # model.py applies INT8 quantization at load time (353MB → ~180MB RAM).
-    MODEL_PATH: str = "./models/Hybrid_vit.pth"
-    MODEL_VERSION: str = "HybridViTCNN-v1.0"
-    MODEL_DOWNLOAD_URL: Optional[str] = "https://huggingface.co/Dinesh-18-AIML/deepvision-hybrid-vit/resolve/main/Hybrid_vit.pth"
+    # Points to Hybrid_vit_int8.pth (192MB INT8 quantized model).
+    # Loads directly with PyTorch dynamic quantization in ~140MB RAM.
+    MODEL_PATH: str = "./models/Hybrid_vit_int8.pth"
+    MODEL_VERSION: str = "HybridViTCNN-v1.0-INT8"
+    MODEL_DOWNLOAD_URL: Optional[str] = "https://huggingface.co/Dinesh-18-AIML/deepvision-hybrid-vit/resolve/main/Hybrid_vit_int8.pth"
     CONFIDENCE_THRESHOLD: float = 0.5
     VIDEO_SAMPLE_FRAMES: int = 8
     DEVICE: str = "cpu"
@@ -77,28 +76,32 @@ class Settings(BaseSettings):
         Locate model weights. Search order:
           1. Sanitize URL accidentally passed as MODEL_PATH
           2. Exact configured path (MODEL_PATH env var)
-          3. /app/models/Hybrid_vit.pth  (baked in Docker image)
-          4. Monorepo ai_models/ dir     (local dev)
+          3. /app/models/Hybrid_vit_int8.pth
+          4. Monorepo ai_models/ dir (local dev)
         """
         backend_dir = Path(__file__).resolve().parent.parent.parent
 
         if self.MODEL_PATH.startswith("http"):
-            return (backend_dir / "models" / "Hybrid_vit.pth").resolve()
+            return (backend_dir / "models" / "Hybrid_vit_int8.pth").resolve()
 
         configured = Path(self.MODEL_PATH)
         if configured.is_file():
             return configured.resolve()
 
-        local = backend_dir / "models" / "Hybrid_vit.pth"
-        if local.is_file():
-            return local.resolve()
+        local_int8 = backend_dir / "models" / "Hybrid_vit_int8.pth"
+        if local_int8.is_file():
+            return local_int8.resolve()
 
-        for name in ("Hybrid_vit_int8.pth", "Hybrid_vit.pth"):
+        local_float = backend_dir / "models" / "Hybrid_vit.pth"
+        if local_float.is_file():
+            return local_float.resolve()
+
+        for name in ("Hybrid_vit_int8.pth", "Hybrid_vit.pth", "Hybrid_vit_quantized.pth"):
             dev = backend_dir.parent / "ai_models" / name
             if dev.is_file():
                 return dev.resolve()
 
-        return (backend_dir / "models" / "Hybrid_vit.pth").resolve()
+        return (backend_dir / "models" / "Hybrid_vit_int8.pth").resolve()
 
 
 @lru_cache()

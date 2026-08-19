@@ -17,9 +17,9 @@ services:
       - key: SUPABASE_STORAGE_BUCKET
         value: "detection-media"
       - key: MODEL_PATH
-        value: "./models/Hybrid_vit.pth"
+        value: "./models/Hybrid_vit_int8.pth"
       - key: MODEL_VERSION
-        value: "HybridViTCNN-v1.0"
+        value: "HybridViTCNN-v1.0-INT8"
       - key: DEVICE
         value: "cpu"
       - key: CONFIDENCE_THRESHOLD
