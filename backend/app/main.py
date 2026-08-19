@@ -37,9 +37,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     import asyncio
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION} ({settings.ENVIRONMENT})...")
 
-    # Pre-warm model in background thread immediately on startup
+    # Pre-warm model in background thread after a brief grace period so server starts 200 OK instantly
     async def _warmup_model():
         try:
+            await asyncio.sleep(5)
             from app.engine.model import load_model
             logger.info("Lifespan: Starting background model pre-warming...")
             await asyncio.to_thread(load_model)
@@ -122,7 +123,7 @@ def create_application() -> FastAPI:
     # 4. Health & Status Endpoints
     @app.api_route("/", methods=["GET", "HEAD"], tags=["Health"], summary="API Root / Status")
     @app.api_route("/health", methods=["GET", "HEAD"], tags=["Health"], summary="Health check probe")
-    def health_check():
+    async def health_check():
         from app.engine.model import get_model_status
         model_status = get_model_status()
         return {
