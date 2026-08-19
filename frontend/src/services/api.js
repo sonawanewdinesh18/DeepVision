@@ -209,9 +209,10 @@ export const detectionApi = {
     const form = new FormData();
     form.append('file', file);
     return api.post('/api/v1/detection/analyze', form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: { 'Content-Type': undefined },
     });
   },
+
 
   /**
    * Fetch the detection history for the current user.
