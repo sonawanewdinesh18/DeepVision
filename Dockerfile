@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install --no-cache-dir \
     torch==2.2.2+cpu \
     torchvision==0.17.2+cpu \
+    "numpy>=1.26.0,<2.0.0" \
     --index-url https://download.pytorch.org/whl/cpu
 
 # Download the full model from Hugging Face
@@ -90,6 +91,7 @@ COPY backend/requirements.txt .
 RUN pip install --no-cache-dir --user \
     torch==2.2.2+cpu \
     torchvision==0.17.2+cpu \
+    "numpy>=1.26.0,<2.0.0" \
     --index-url https://download.pytorch.org/whl/cpu
 
 RUN pip install --no-cache-dir --user -r requirements.txt
