@@ -1,154 +1,190 @@
 """
 app/engine/predictor.py
 
-Inference routines for image and video deepfake classification.
-Uses PyTorch HybridViTCNN with dual-cascade face localization and standard ImageNet normalization.
+Deepfake detection inference.
+
+Deployment modes (auto-selected based on USE_HF_API env var):
+
+  1. HF_API mode  (USE_HF_API=true, recommended for Render free tier)
+     - Sends the image to your Hugging Face Space API endpoint
+     - Zero PyTorch RAM on the backend server
+     - Requires HF_API_URL and optionally HF_API_TOKEN in environment
+
+  2. Local mode   (USE_HF_API=false, default for local/paid hosting)
+     - Loads HybridViTCNN weights locally via PyTorch
+     - Requires ~280MB RAM after INT8 quantization
 """
 
-import os
 import io
 import gc
+import os
 import time
-import tempfile
+import base64
 import logging
+import tempfile
 from typing import Any, Dict, List, Tuple
 
 import cv2
 import numpy as np
-import torch
-import torchvision.transforms as T
 from PIL import Image
 
 from app.core.config import settings
-from app.engine.model import load_model, InferenceError, ModelLoadError
 
 logger = logging.getLogger(__name__)
 
-# Full-frame bicubic resize to 224x224 matching ViT and EfficientNet input size
-_transform = T.Compose([
-    T.Resize((224, 224), interpolation=T.InterpolationMode.BICUBIC),
-    T.ToTensor(),
-    T.Normalize(
-        mean=[0.485, 0.456, 0.406],
-        std=[0.229, 0.224, 0.225]
-    ),
-])
+# ── Mode detection ─────────────────────────────────────────────────────────
+_USE_HF_API = os.getenv("USE_HF_API", "false").lower() == "true"
+_HF_API_URL = os.getenv("HF_API_URL", "")          # e.g. https://YOUR-SPACE.hf.space
+_HF_API_TOKEN = os.getenv("HF_API_TOKEN", "")       # HF read token (optional for public spaces)
 
-# Lazy-loaded OpenCV Face Cascades for maximum recall on portraits, tilted, and smiling faces
+
+# ── Face detection (shared by both modes) ─────────────────────────────────
+
 _face_cascade_alt2 = None
 _face_cascade_default = None
 
 
 def _get_cascades():
-    """Lazily load Haar cascades with safe fallback."""
     global _face_cascade_alt2, _face_cascade_default
     if _face_cascade_alt2 is None:
         try:
             cascade_dir = getattr(cv2.data, "haarcascades", "") if hasattr(cv2, "data") else ""
-            if hasattr(cv2, "CascadeClassifier"):
-                _face_cascade_alt2 = cv2.CascadeClassifier(cascade_dir + "haarcascade_frontalface_alt2.xml")
-                _face_cascade_default = cv2.CascadeClassifier(cascade_dir + "haarcascade_frontalface_default.xml")
-        except Exception as exc:
-            logger.debug(f"OpenCV cascade loading note: {exc}")
+            _face_cascade_alt2 = cv2.CascadeClassifier(cascade_dir + "haarcascade_frontalface_alt2.xml")
+            _face_cascade_default = cv2.CascadeClassifier(cascade_dir + "haarcascade_frontalface_default.xml")
+        except Exception as e:
+            logger.debug(f"Cascade load note: {e}")
     return _face_cascade_alt2, _face_cascade_default
 
 
 def _detect_and_crop_face(pil_img: Image.Image) -> Tuple[Image.Image, bool, List[int]]:
-    """
-    Detect the primary face in the image using dual-cascade ensemble and crop it with 30% margin.
-    Ensures the HybridViTCNN processes the facial region matching its training distribution.
-    """
     try:
         cascade_alt2, cascade_default = _get_cascades()
-        if cascade_alt2 is None or cascade_default is None:
+        if not cascade_alt2 or not cascade_default:
             return pil_img, False, []
 
         np_img = np.array(pil_img)
-        if len(np_img.shape) == 2:
-            gray = np_img
-        elif np_img.shape[2] == 4:
-            # Handle RGBA images
-            gray = cv2.cvtColor(np_img, cv2.COLOR_RGBA2GRAY)
-        else:
-            gray = cv2.cvtColor(np_img, cv2.COLOR_RGB2GRAY)
+        gray = cv2.cvtColor(np_img, cv2.COLOR_RGB2GRAY) if len(np_img.shape) == 3 else np_img
 
-        # 1. First attempt: alt2 cascade (higher accuracy on realistic faces)
-        faces = cascade_alt2.detectMultiScale(
-            gray,
-            scaleFactor=1.08,
-            minNeighbors=4,
-            minSize=(40, 40),
-        )
-
-        # 2. Fallback attempt: default cascade
+        faces = cascade_alt2.detectMultiScale(gray, scaleFactor=1.08, minNeighbors=4, minSize=(40, 40))
         if len(faces) == 0:
-            faces = cascade_default.detectMultiScale(
-                gray,
-                scaleFactor=1.1,
-                minNeighbors=3,
-                minSize=(40, 40),
-            )
+            faces = cascade_default.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=3, minSize=(40, 40))
 
         if len(faces) > 0:
-            # Select the largest detected face by area
             x, y, w, h = max(faces, key=lambda f: f[2] * f[3])
-            
-            # Add 30% contextual margin around the face to preserve hair, chin, and boundary
-            margin_x = int(w * 0.30)
-            margin_y = int(h * 0.30)
-            
-            img_w, img_h = pil_img.size
-            x1 = max(0, x - margin_x)
-            y1 = max(0, y - margin_y)
-            x2 = min(img_w, x + w + margin_x)
-            y2 = min(img_h, y + h + margin_y)
-            
-            face_crop = pil_img.crop((x1, y1, x2, y2))
-            return face_crop, True, [int(x), int(y), int(w), int(h)]
-            
+            mx, my = int(w * 0.30), int(h * 0.30)
+            iw, ih = pil_img.size
+            crop = pil_img.crop((max(0, x - mx), max(0, y - my), min(iw, x + w + mx), min(ih, y + h + my)))
+            return crop, True, [int(x), int(y), int(w), int(h)]
     except Exception as e:
         logger.debug(f"Face detection fallback: {e}")
 
     return pil_img, False, []
 
 
-def predict_image(image_bytes: bytes) -> Tuple[float, str, Dict[str, Any]]:
-    """
-    Execute deepfake detection on a single image byte string.
+# ── HF API Mode ────────────────────────────────────────────────────────────
 
-    Returns:
-        confidence: float (0.0 to 1.0)
-        verdict: "REAL" or "FAKE"
-        details: forensic metadata dictionary
+def _call_hf_api(image_bytes: bytes) -> Tuple[float, str, Dict[str, Any]]:
     """
+    Send image to Hugging Face Space API and get prediction.
+    The Space must expose a /predict endpoint that accepts base64 image
+    and returns {fake_probability, real_probability}.
+    """
+    import httpx
+
+    if not _HF_API_URL:
+        raise RuntimeError(
+            "HF_API_URL is not set. Set it to your Hugging Face Space URL "
+            "(e.g. https://dinesh-18-aiml-deepvision-inference.hf.space)"
+        )
+
+    t0 = time.perf_counter()
+
+    # Encode image as base64
+    b64 = base64.b64encode(image_bytes).decode("utf-8")
+
+    headers = {"Content-Type": "application/json"}
+    if _HF_API_TOKEN:
+        headers["Authorization"] = f"Bearer {_HF_API_TOKEN}"
+
+    payload = {"data": [{"image": b64}]}
+
+    try:
+        with httpx.Client(timeout=120.0) as client:
+            response = client.post(f"{_HF_API_URL.rstrip('/')}/predict", json=payload, headers=headers)
+            response.raise_for_status()
+            result = response.json()
+    except httpx.TimeoutException:
+        raise RuntimeError("HF Space API timed out. The space may be sleeping — try again in 30s.")
+    except Exception as e:
+        raise RuntimeError(f"HF Space API error: {e}")
+
+    inference_ms = int((time.perf_counter() - t0) * 1000)
+
+    # Parse response — adapt to your Space's output format
+    data = result.get("data", [{}])
+    if isinstance(data, list) and len(data) > 0:
+        pred = data[0]
+    else:
+        pred = result
+
+    fake_prob = float(pred.get("fake_probability", pred.get("fake", 0.5)))
+    real_prob = float(pred.get("real_probability", pred.get("real", 1 - fake_prob)))
+
+    is_fake = fake_prob >= settings.CONFIDENCE_THRESHOLD
+    verdict = "FAKE" if is_fake else "REAL"
+    confidence = fake_prob if is_fake else real_prob
+
+    details = {
+        "fake_probability": round(fake_prob, 4),
+        "real_probability": round(real_prob, 4),
+        "model_version": settings.MODEL_VERSION,
+        "media_type": "image",
+        "inference_ms": inference_ms,
+        "mode": "hf_api",
+    }
+
+    return round(confidence, 4), verdict, details
+
+
+# ── Local PyTorch Mode ─────────────────────────────────────────────────────
+
+def _predict_local_image(image_bytes: bytes) -> Tuple[float, str, Dict[str, Any]]:
+    """Run inference locally using the PyTorch HybridViTCNN model."""
+    import torch
+    import torchvision.transforms as T
+    from app.engine.model import load_model, InferenceError, ModelLoadError
+
+    _transform = T.Compose([
+        T.Resize((224, 224), interpolation=T.InterpolationMode.BICUBIC),
+        T.ToTensor(),
+        T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
+
     model, device = load_model()
 
     try:
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-        
-        # Crop face if present for optimal model evaluation
         eval_image, face_detected, face_bbox = _detect_and_crop_face(image)
-        
-        tensor = _transform(eval_image).unsqueeze(0).to(device)  # Shape: [1, 3, 224, 224]
 
-        start_time = time.perf_counter()
+        tensor = _transform(eval_image).unsqueeze(0).to(device)
+
+        t0 = time.perf_counter()
         with torch.inference_mode():
             logits = model(tensor)
-            probabilities = torch.softmax(logits, dim=1)[0]
-        inference_ms = int((time.perf_counter() - start_time) * 1000)
+            probs = torch.softmax(logits, dim=1)[0]
+        inference_ms = int((time.perf_counter() - t0) * 1000)
 
-        # Class 0: Fake, Class 1: Real (from ImageFolder dataset mapping: {'fake': 0, 'real': 1})
-        fake_prob = float(probabilities[0].item())
-        real_prob = float(probabilities[1].item())
+        fake_prob = float(probs[0].item())
+        real_prob = float(probs[1].item())
 
-        del tensor, logits, probabilities
+        del tensor, logits, probs
         gc.collect()
 
         is_fake = fake_prob >= settings.CONFIDENCE_THRESHOLD
         verdict = "FAKE" if is_fake else "REAL"
         confidence = fake_prob if is_fake else real_prob
 
-        details = {
+        return round(confidence, 4), verdict, {
             "fake_probability": round(fake_prob, 4),
             "real_probability": round(real_prob, 4),
             "model_version": settings.MODEL_VERSION,
@@ -158,113 +194,60 @@ def predict_image(image_bytes: bytes) -> Tuple[float, str, Dict[str, Any]]:
             "face_bbox": face_bbox,
             "inference_ms": inference_ms,
             "device": str(device),
+            "mode": "local",
         }
-
-        return round(confidence, 4), verdict, details
 
     except (ModelLoadError, InferenceError):
         raise
     except Exception as exc:
-        logger.exception("Failed to run image inference.")
+        logger.exception("Local image inference failed.")
         raise InferenceError(f"Image inference failed: {exc}") from exc
 
 
-def _extract_video_frames(video_bytes: bytes, n_frames: int) -> List[np.ndarray]:
-    """
-    Extract n_frames evenly-spaced frames from video bytes using OpenCV.
-    Returns RGB numpy arrays of shape (H, W, 3).
-    """
-    tmp_path: str = ""
-    try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as f:
-            f.write(video_bytes)
-            tmp_path = f.name
+def _predict_local_video(video_bytes: bytes) -> Tuple[float, str, Dict[str, Any]]:
+    """Run video inference locally using PyTorch."""
+    import torch
+    import torchvision.transforms as T
+    from app.engine.model import load_model, InferenceError
 
-        cap = cv2.VideoCapture(tmp_path)
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        if total_frames <= 0:
-            cap.release()
-            return []
+    _transform = T.Compose([
+        T.Resize((224, 224), interpolation=T.InterpolationMode.BICUBIC),
+        T.ToTensor(),
+        T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
 
-        # Calculate evenly spaced frame indices
-        sample_count = min(n_frames, total_frames)
-        indices = np.linspace(0, total_frames - 1, sample_count, dtype=int)
-        
-        frames: List[np.ndarray] = []
-        for idx in indices:
-            cap.set(cv2.CAP_PROP_POS_FRAMES, int(idx))
-            success, frame = cap.read()
-            if success and frame is not None:
-                rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                frames.append(rgb_frame)
-
-        cap.release()
-        return frames
-
-    finally:
-        if tmp_path and os.path.exists(tmp_path):
-            try:
-                os.unlink(tmp_path)
-            except Exception:
-                pass
-
-
-def predict_video(video_bytes: bytes) -> Tuple[float, str, Dict[str, Any]]:
-    """
-    Execute deepfake detection across sampled frames of a video.
-
-    Returns:
-        confidence: float (0.0 to 1.0)
-        verdict: "REAL" or "FAKE"
-        details: frame-by-frame breakdown and aggregate scores
-    """
     model, device = load_model()
-
-    start_time = time.perf_counter()
+    t0 = time.perf_counter()
     raw_frames = _extract_video_frames(video_bytes, settings.VIDEO_SAMPLE_FRAMES)
 
     if not raw_frames:
-        raise InferenceError("Unable to decode or extract frames from the uploaded video.")
+        raise InferenceError("Unable to extract frames from video.")
 
-    processed_frames: List[Image.Image] = []
-    for frame_arr in raw_frames:
-        pil_frame = Image.fromarray(frame_arr)
-        cropped_frame, _, _ = _detect_and_crop_face(pil_frame)
-        processed_frames.append(cropped_frame)
-
-    fake_probs: List[float] = []
-    frame_results: List[Dict[str, Any]] = []
-
-    # Batch transform frames for efficient inference
-    tensors = torch.stack([
-        _transform(f) for f in processed_frames
-    ]).to(device)
+    processed = [_detect_and_crop_face(Image.fromarray(f))[0] for f in raw_frames]
+    tensors = torch.stack([_transform(f) for f in processed]).to(device)
 
     with torch.inference_mode():
         logits = model(tensors)
         probs = torch.softmax(logits, dim=1)
 
-    for i, p in enumerate(probs):
-        fake_p = float(p[0].item())  # Class 0: Fake
-        fake_probs.append(fake_p)
-        frame_results.append({
-            "frame_index": i,
-            "fake_probability": round(fake_p, 4),
-            "verdict": "FAKE" if fake_p >= settings.CONFIDENCE_THRESHOLD else "REAL",
-        })
+    fake_probs = [float(p[0].item()) for p in probs]
+    frame_results = [
+        {"frame_index": i, "fake_probability": round(fp, 4),
+         "verdict": "FAKE" if fp >= settings.CONFIDENCE_THRESHOLD else "REAL"}
+        for i, fp in enumerate(fake_probs)
+    ]
 
     del tensors, logits, probs
     gc.collect()
 
-    inference_ms = int((time.perf_counter() - start_time) * 1000)
+    inference_ms = int((time.perf_counter() - t0) * 1000)
     avg_fake = float(np.mean(fake_probs))
     avg_real = 1.0 - avg_fake
-
     is_fake = avg_fake >= settings.CONFIDENCE_THRESHOLD
     verdict = "FAKE" if is_fake else "REAL"
     confidence = avg_fake if is_fake else avg_real
 
-    details = {
+    return round(confidence, 4), verdict, {
         "fake_probability": round(avg_fake, 4),
         "real_probability": round(avg_real, 4),
         "frames_analyzed": len(raw_frames),
@@ -274,6 +257,54 @@ def predict_video(video_bytes: bytes) -> Tuple[float, str, Dict[str, Any]]:
         "media_type": "video",
         "inference_ms": inference_ms,
         "device": str(device),
+        "mode": "local",
     }
 
-    return round(confidence, 4), verdict, details
+
+# ── Video frame extractor ──────────────────────────────────────────────────
+
+def _extract_video_frames(video_bytes: bytes, n_frames: int) -> List[np.ndarray]:
+    tmp_path = ""
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as f:
+            f.write(video_bytes)
+            tmp_path = f.name
+
+        cap = cv2.VideoCapture(tmp_path)
+        total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        if total <= 0:
+            cap.release()
+            return []
+
+        indices = np.linspace(0, total - 1, min(n_frames, total), dtype=int)
+        frames = []
+        for idx in indices:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, int(idx))
+            ok, frame = cap.read()
+            if ok and frame is not None:
+                frames.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        cap.release()
+        return frames
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.unlink(tmp_path)
+            except Exception:
+                pass
+
+
+# ── Public API ─────────────────────────────────────────────────────────────
+
+def predict_image(image_bytes: bytes) -> Tuple[float, str, Dict[str, Any]]:
+    """Detect deepfake in an image. Uses HF API or local model based on USE_HF_API env var."""
+    if _USE_HF_API:
+        logger.info("Using HF Space API for inference.")
+        return _call_hf_api(image_bytes)
+    else:
+        logger.info("Using local PyTorch model for inference.")
+        return _predict_local_image(image_bytes)
+
+
+def predict_video(video_bytes: bytes) -> Tuple[float, str, Dict[str, Any]]:
+    """Detect deepfake in a video. Always uses local model (HF API mode not supported for video)."""
+    return _predict_local_video(video_bytes)
