@@ -29,6 +29,20 @@ class CustomAPIException(Exception):
         super().__init__(message)
 
 
+def _cors_headers(request: Request) -> Dict[str, str]:
+    origin = request.headers.get("origin")
+    if origin:
+        return {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        }
+    return {
+        "Access-Control-Allow-Origin": "*",
+    }
+
+
 async def custom_api_exception_handler(request: Request, exc: CustomAPIException) -> JSONResponse:
     """Handles all CustomAPIException instances."""
     content = {
@@ -40,7 +54,7 @@ async def custom_api_exception_handler(request: Request, exc: CustomAPIException
     if exc.details:
         content["error"]["details"] = exc.details
 
-    return JSONResponse(status_code=exc.status_code, content=content)
+    return JSONResponse(status_code=exc.status_code, content=content, headers=_cors_headers(request))
 
 
 async def standard_http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
@@ -53,6 +67,7 @@ async def standard_http_exception_handler(request: Request, exc: StarletteHTTPEx
                 "message": str(exc.detail),
             }
         },
+        headers=_cors_headers(request),
     )
 
 
@@ -67,6 +82,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
                 "details": exc.errors(),
             }
         },
+        headers=_cors_headers(request),
     )
 
 
@@ -80,6 +96,7 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
                 "message": f"Internal processing error: {str(exc)}",
             }
         },
+        headers=_cors_headers(request),
     )
 
 
@@ -89,3 +106,4 @@ def setup_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(StarletteHTTPException, standard_http_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(Exception, generic_exception_handler)
+

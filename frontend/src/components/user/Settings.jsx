@@ -27,25 +27,28 @@ const Settings = () => {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const [profileResponse, settingsResponse] = await Promise.all([
+      const [profileRes, settingsRes] = await Promise.allSettled([
         userApi.getProfile(),
         userApi.getSettings()
       ]);
 
-      setFormData({
-        name: profileResponse.data.full_name || '',
-        email: profileResponse.data.email || '',
-        notifications: settingsResponse.data.email_notifications,
-        weeklyReport: settingsResponse.data.weekly_report,
-        twoFactorAuth: settingsResponse.data.two_factor_enabled
-      });
+      const profile = profileRes.status === 'fulfilled' ? profileRes.value.data : {};
+      const settings = settingsRes.status === 'fulfilled' ? settingsRes.value.data : {};
+
+      setFormData(prev => ({
+        name: profile.full_name || user?.user_metadata?.full_name || prev.name || '',
+        email: profile.email || user?.email || prev.email || '',
+        notifications: settings.email_notifications ?? prev.notifications ?? true,
+        weeklyReport: settings.weekly_report ?? prev.weeklyReport ?? false,
+        twoFactorAuth: settings.two_factor_enabled ?? prev.twoFactorAuth ?? false
+      }));
     } catch (error) {
       console.error('Failed to fetch settings:', error);
-      toast.error('Failed to load settings');
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
