@@ -19,14 +19,20 @@ function AppContent() {
   // Track user activity and update last active time
   useLastActive();
 
-  // Pre-warm backend and keep Render container awake while browsing
+  // Pre-warm backend after initial paint — delayed so it doesn't compete with LCP
   useEffect(() => {
-    healthApi.checkHealth().catch(() => {});
+    const warmup = setTimeout(() => {
+      healthApi.checkHealth().catch(() => {});
+    }, 3000); // wait 3s after mount before hitting the network
+
     const interval = setInterval(() => {
       healthApi.checkHealth().catch(() => {});
-    }, 4 * 60 * 1000); // every 4 minutes
+    }, 4 * 60 * 1000); // keep-alive every 4 minutes
 
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(warmup);
+      clearInterval(interval);
+    };
   }, []);
 
   return (
