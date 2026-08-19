@@ -30,12 +30,25 @@ logger = logging.getLogger("deepvision")
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
-    Lifespan events.
-    Model is loaded lazily on first inference request — this keeps startup
-    instant and the health check green immediately (important for Render free
-    tier where cold starts are time-limited).
+    Application Lifespan Events.
+    Kicks off background model download and loading on boot so the model is
+    warmed up and resident in RAM before the first user inference request arrives.
     """
+    import asyncio
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION} ({settings.ENVIRONMENT})...")
+
+    # Pre-warm model in background thread immediately on startup
+    async def _warmup_model():
+        try:
+            from app.engine.model import load_model
+            logger.info("Lifespan: Starting background model pre-warming...")
+            await asyncio.to_thread(load_model)
+            logger.info("Lifespan: Model successfully pre-warmed and ready.")
+        except Exception as e:
+            logger.warning(f"Lifespan: Background model pre-warming note: {e}")
+
+    asyncio.create_task(_warmup_model())
+
     yield
     logger.info("Shutting down DeepVision API...")
 
