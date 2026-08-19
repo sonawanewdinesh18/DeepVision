@@ -268,17 +268,13 @@ export default function LandingPage() {
                 {/* Vignette */}
                 <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse 80% 60% at 50% 50%,transparent 30%,var(--bg-base) 100%)' }} />
 
-                <motion.div style={{
-                    y: heroY, opacity: heroOpacity,
-                    position: 'relative', zIndex: 1,
-                    width: '100%', maxWidth: 1240,
-                    margin: '0 auto',
-                    padding: '120px 60px 80px',
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: 64,
-                    alignItems: 'center',
-                }}>
+                <motion.div 
+                    className="landing-hero-grid"
+                    style={{
+                        y: heroY, opacity: heroOpacity,
+                        position: 'relative', zIndex: 1,
+                    }}
+                >
 
                     {/* ── LEFT ── */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -347,8 +343,10 @@ export default function LandingPage() {
                         </motion.div>
 
                         {/* 4 stat boxes */}
-                        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2.6, duration: 0.6 }}
-                            style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
+                        <motion.div 
+                            className="landing-hero-stats"
+                            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2.6, duration: 0.6 }}
+                        >
                             {STAT_BOXES.map((s, i) => (
                                 <motion.div key={i}
                                     initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
@@ -576,7 +574,7 @@ export default function LandingPage() {
                     </motion.div>
 
                     {/* Cards — drop one by one */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+                    <div className="landing-features-grid">
                         {FEATURES.map(({ Icon, title, desc, tag, color, glow }, i) => (
                             <motion.div
                                 key={title}
@@ -697,14 +695,10 @@ export default function LandingPage() {
                     </motion.div>
 
                     {/* Steps */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 0, position: 'relative' }}>
+                    <div className="landing-steps-grid">
 
                         {/* connector line */}
-                        <div style={{
-                            position: 'absolute', top: 44, left: '16.66%', right: '16.66%', height: 2,
-                            background: 'linear-gradient(90deg,#63B3ED,#8B5CF6,#10b981)',
-                            opacity: 0.35, zIndex: 0,
-                        }} />
+                        <div className="landing-steps-connector" />
 
                         {[
                             {
@@ -843,7 +837,7 @@ export default function LandingPage() {
                     </motion.div>
 
                     {/* ── 2-COL LAYOUT ── */}
-                    <motion.div {...fadeUp(0.1)} style={{ display:'grid', gridTemplateColumns:'400px 1fr', gap:24, alignItems:'start' }}>
+                    <motion.div {...fadeUp(0.1)} className="landing-contact-grid">
 
                         {/* LEFT — glass info panel */}
                         <div style={{ background:'linear-gradient(155deg,rgba(108,63,245,0.14) 0%,rgba(6,182,212,0.07) 100%)', border:'1px solid rgba(108,63,245,0.22)', borderRadius:28, padding:'36px 30px', backdropFilter:'blur(18px)', position:'relative', overflow:'hidden' }}>
@@ -1030,7 +1024,7 @@ export default function LandingPage() {
                     </motion.div>
 
                     {/* mission + vision */}
-                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:24, marginBottom:40 }}>
+                    <div className="landing-about-grid">
                         {[
                             { color:'#8B5CF6', glow:'rgba(139,92,246,0.12)', label:'Our Mission', title:'Detect. Protect. Empower.', desc:'Deepfakes are becoming indistinguishable from reality. We built DeepVision to give individuals, journalists, and enterprises a reliable tool to verify media authenticity — instantly and accurately.' },
                             { color:'#06b6d4', glow:'rgba(6,182,212,0.12)', label:'Our Vision', title:'A world where truth is verifiable.', desc:'We envision a future where every piece of media can be verified in seconds. Our AI models are trained on millions of real and synthetic samples to stay ahead of the latest generation techniques.' },

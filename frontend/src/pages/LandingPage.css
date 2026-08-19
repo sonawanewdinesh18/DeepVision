@@ -28,3 +28,132 @@
     transform: scale(0.95);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Responsive Grid Layouts for Landing Page
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── Hero Section ─── */
+.landing-hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: center;
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 120px 60px 80px;
+  box-sizing: border-box;
+}
+
+.landing-hero-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+/* ─── Features Grid ─── */
+.landing-features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  width: 100%;
+}
+
+/* ─── How It Works Steps Grid ─── */
+.landing-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  position: relative;
+  width: 100%;
+}
+
+.landing-steps-connector {
+  position: absolute;
+  top: 44px;
+  left: 16.66%;
+  right: 16.66%;
+  height: 2px;
+  background: linear-gradient(90deg, #63B3ED, #8B5CF6, #10b981);
+  opacity: 0.35;
+  z-index: 0;
+}
+
+/* ─── Contact Section ─── */
+.landing-contact-grid {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* ─── About Section ─── */
+.landing-about-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+/* ─── Responsive Media Queries ─── */
+@media (max-width: 1024px) {
+  .landing-hero-grid {
+    grid-template-columns: 1fr;
+    gap: 48px;
+    padding: 100px 32px 60px;
+  }
+
+  .landing-features-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .landing-contact-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .landing-hero-grid {
+    padding: 90px 16px 48px;
+    gap: 36px;
+  }
+
+  .landing-hero-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .landing-features-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .landing-steps-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .landing-steps-connector {
+    display: none;
+  }
+
+  .landing-about-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-hero-grid {
+    padding: 80px 12px 36px;
+  }
+
+  .landing-hero-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+}
+
