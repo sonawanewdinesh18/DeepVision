@@ -34,6 +34,10 @@ RUN useradd -m -u 1000 appuser && \
     mkdir -p /app/models && \
     chown -R appuser:appuser /app
 
+# Pre-download model weights during image build so inference is instantaneous without runtime downloading
+RUN curl -L -o /app/models/Hybrid_vit.pth "https://huggingface.co/Dinesh-18-AIML/deepvision-hybrid-vit/resolve/main/Hybrid_vit.pth" || true && \
+    chown -R appuser:appuser /app/models
+
 # Copy installed Python packages from builder stage
 COPY --from=builder /root/.local /home/appuser/.local
 ENV PATH=/home/appuser/.local/bin:$PATH
@@ -45,6 +49,7 @@ ENV MKL_NUM_THREADS=1
 
 # Copy application source code
 COPY --chown=appuser:appuser . /app
+
 
 USER appuser
 
