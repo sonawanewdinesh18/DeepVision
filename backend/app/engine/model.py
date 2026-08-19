@@ -209,6 +209,7 @@ def _load_weights(model_path: Path, device: torch.device) -> Optional[nn.Module]
 
         loaded_obj = None
         for kwargs in [
+            {"map_location": "cpu", "weights_only": True, "mmap": True},
             {"map_location": "cpu", "weights_only": True},
             {"map_location": "cpu", "weights_only": False},
         ]:
