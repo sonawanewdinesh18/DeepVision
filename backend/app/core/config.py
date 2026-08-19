@@ -44,22 +44,26 @@ class Settings(BaseSettings):
     SUPABASE_JWT_SECRET: str = ""
     SUPABASE_STORAGE_BUCKET: str = "detection-media"
 
-    # ── AI Model Configuration ────────────────────────────────
-    # In production (Render free), MODEL_PATH should point to the INT8
-    # quantized weights (183MB) which fit comfortably in 512MB RAM.
-    # Set via env var: MODEL_PATH=./models/Hybrid_vit_int8.pth
+    # ── AI Model ──────────────────────────────────────────────
+    # Points to Hybrid_vit.pth — the only file in the HF repo.
+    # The Dockerfile downloads it at build time and places it at /app/models/.
+    # model.py applies INT8 quantization at load time (353MB → ~180MB RAM).
     MODEL_PATH: str = "./models/Hybrid_vit.pth"
     MODEL_VERSION: str = "HybridViTCNN-v1.0"
-    # Primary download URL — full model from Hugging Face
     MODEL_DOWNLOAD_URL: Optional[str] = "https://huggingface.co/Dinesh-18-AIML/deepvision-hybrid-vit/resolve/main/Hybrid_vit.pth"
     CONFIDENCE_THRESHOLD: float = 0.5
-    VIDEO_SAMPLE_FRAMES: int = 8   # Reduced for free-tier memory headroom
-    DEVICE: str = "cpu"            # Render free has no GPU
+    VIDEO_SAMPLE_FRAMES: int = 8
+    DEVICE: str = "cpu"
 
     # ── File Limits ───────────────────────────────────────────
-    MAX_IMAGE_SIZE_BYTES: int = 20 * 1024 * 1024   # 20 MB (reduced for free tier)
-    MAX_VIDEO_SIZE_BYTES: int = 100 * 1024 * 1024  # 100 MB
-    MAX_VIDEO_DURATION_SECONDS: int = 120           # 2 minutes
+    MAX_IMAGE_SIZE_BYTES: int = 20 * 1024 * 1024
+    MAX_VIDEO_SIZE_BYTES: int = 100 * 1024 * 1024
+    MAX_VIDEO_DURATION_SECONDS: int = 120
+
+    # ── HF Space Inference API (optional, for zero-RAM mode) ──
+    USE_HF_API: bool = False
+    HF_API_URL: str = ""
+    HF_API_TOKEN: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -71,45 +75,34 @@ class Settings(BaseSettings):
     def resolve_model_path(self) -> Path:
         """
         Locate model weights. Search order:
-          1. Sanitize if a URL was accidentally passed as MODEL_PATH
-          2. Exact path in MODEL_PATH env var
-          3. backend/models/Hybrid_vit_int8.pth  (production Docker image)
-          4. backend/models/Hybrid_vit.pth        (full model fallback)
-          5. Monorepo ai_models/ directory         (local dev)
+          1. Sanitize URL accidentally passed as MODEL_PATH
+          2. Exact configured path (MODEL_PATH env var)
+          3. /app/models/Hybrid_vit.pth  (baked in Docker image)
+          4. Monorepo ai_models/ dir     (local dev)
         """
         backend_dir = Path(__file__).resolve().parent.parent.parent
 
-        # 1. Ignore URL values
-        if self.MODEL_PATH.startswith("http://") or self.MODEL_PATH.startswith("https://"):
-            return (backend_dir / "models" / "Hybrid_vit_int8.pth").resolve()
+        if self.MODEL_PATH.startswith("http"):
+            return (backend_dir / "models" / "Hybrid_vit.pth").resolve()
 
-        # 2. Configured path
         configured = Path(self.MODEL_PATH)
         if configured.is_file():
             return configured.resolve()
 
-        # 3. INT8 quantized model in backend/models/
-        int8_model = backend_dir / "models" / "Hybrid_vit_int8.pth"
-        if int8_model.is_file():
-            return int8_model.resolve()
+        local = backend_dir / "models" / "Hybrid_vit.pth"
+        if local.is_file():
+            return local.resolve()
 
-        # 4. Full model in backend/models/
-        full_model = backend_dir / "models" / "Hybrid_vit.pth"
-        if full_model.is_file():
-            return full_model.resolve()
-
-        # 5. Monorepo root ai_models/ — try INT8 first, then full
         for name in ("Hybrid_vit_int8.pth", "Hybrid_vit.pth"):
-            monorepo_model = backend_dir.parent / "ai_models" / name
-            if monorepo_model.is_file():
-                return monorepo_model.resolve()
+            dev = backend_dir.parent / "ai_models" / name
+            if dev.is_file():
+                return dev.resolve()
 
-        # Default fallback path (will trigger download if not found)
-        return (backend_dir / "models" / "Hybrid_vit_int8.pth").resolve()
+        return (backend_dir / "models" / "Hybrid_vit.pth").resolve()
+
 
 @lru_cache()
 def get_settings() -> Settings:
-    """Return a cached Settings singleton."""
     return Settings()
 
 

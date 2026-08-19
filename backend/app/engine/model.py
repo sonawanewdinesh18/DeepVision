@@ -231,8 +231,11 @@ def _load_weights(model_path: Path, device: torch.device) -> Optional[nn.Module]
         net.to(device)
         net.eval()
 
-        # Dynamic INT8 quantization on CPU reduces RAM from ~350MB to ~180MB
-        if device.type == "cpu":
+        # Apply dynamic INT8 quantization on CPU only if the file is NOT already quantized.
+        # The Docker build saves a pre-quantized state dict as Hybrid_vit.pth,
+        # so skip quantization when loading from the production image.
+        already_quantized = any("_packed_params" in k for k in net.state_dict().keys())
+        if device.type == "cpu" and not already_quantized:
             try:
                 net = torch.ao.quantization.quantize_dynamic(
                     net, {nn.Linear}, dtype=torch.qint8
