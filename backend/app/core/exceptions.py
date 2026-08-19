@@ -70,8 +70,22 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
+async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Catch-all handler for unexpected internal server errors (500)."""
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "error": {
+                "code": "INTERNAL_SERVER_ERROR",
+                "message": f"Internal processing error: {str(exc)}",
+            }
+        },
+    )
+
+
 def setup_exception_handlers(app: FastAPI) -> None:
     """Attach global exception handlers to the FastAPI app instance."""
     app.add_exception_handler(CustomAPIException, custom_api_exception_handler)
     app.add_exception_handler(StarletteHTTPException, standard_http_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(Exception, generic_exception_handler)

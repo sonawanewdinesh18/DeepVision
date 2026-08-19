@@ -85,7 +85,7 @@ class DetectionService:
                 logger.warning(f"Storage upload skipped or failed: {storage_err}")
                 file_url = ""
 
-            # Step 4: Persist in Database
+            # Step 4: Persist in Database (Non-blocking fallback)
             detection_data = {
                 "id": detection_id,
                 "user_id": user_id,
@@ -103,7 +103,10 @@ class DetectionService:
                 },
             }
 
-            supabase.table("detections").insert(detection_data).execute()
+            try:
+                supabase.table("detections").insert(detection_data).execute()
+            except Exception as db_err:
+                logger.warning(f"Database insertion skipped: {db_err}")
 
             # Persist Detailed Analytics
             try:
