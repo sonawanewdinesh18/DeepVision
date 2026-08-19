@@ -16,12 +16,12 @@ services:
         value: "https://deep-vision-five.vercel.app,https://deepvision-five.vercel.app,http://localhost:5173"
       - key: SUPABASE_STORAGE_BUCKET
         value: "detection-media"
-      # INT8 quantized model (183MB) — bundled inside the Docker image at build time.
-      # No runtime download. Fits in Render free tier 512MB RAM (~280MB peak usage).
+      # Model weights are baked into the Docker image at build time (downloaded from HF).
+      # model.py applies dynamic INT8 quantization automatically on first load.
       - key: MODEL_PATH
-        value: "./models/Hybrid_vit_int8.pth"
+        value: "./models/Hybrid_vit.pth"
       - key: MODEL_VERSION
-        value: "HybridViTCNN-v1.0-int8"
+        value: "HybridViTCNN-v1.0"
       - key: DEVICE
         value: "cpu"
       - key: CONFIDENCE_THRESHOLD

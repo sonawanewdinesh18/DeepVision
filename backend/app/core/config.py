@@ -48,8 +48,8 @@ class Settings(BaseSettings):
     # In production (Render free), MODEL_PATH should point to the INT8
     # quantized weights (183MB) which fit comfortably in 512MB RAM.
     # Set via env var: MODEL_PATH=./models/Hybrid_vit_int8.pth
-    MODEL_PATH: str = "./models/Hybrid_vit_int8.pth"
-    MODEL_VERSION: str = "HybridViTCNN-v1.0-int8"
+    MODEL_PATH: str = "./models/Hybrid_vit.pth"
+    MODEL_VERSION: str = "HybridViTCNN-v1.0"
     # Download URL used only as a fallback if the model file is missing at runtime.
     # In Docker deployments the weights are bundled into the image, so this is never hit.
     MODEL_DOWNLOAD_URL: Optional[str] = "https://huggingface.co/Dinesh-18-AIML/deepvision-hybrid-vit/resolve/main/Hybrid_vit.pth"
@@ -107,7 +107,6 @@ class Settings(BaseSettings):
 
         # Default fallback path (will trigger download if not found)
         return (backend_dir / "models" / "Hybrid_vit_int8.pth").resolve()
-
 
 @lru_cache()
 def get_settings() -> Settings:
