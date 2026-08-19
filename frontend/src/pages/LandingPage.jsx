@@ -1047,7 +1047,7 @@ export default function LandingPage() {
                             <div style={{ fontSize:'0.68rem', fontWeight:900, color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.14em', marginBottom:8 }}>The Team</div>
                             <h3 style={{ fontSize:'1.6rem', fontWeight:800, color:'var(--text-primary)', letterSpacing:'-0.02em' }}>People behind DeepVision</h3>
                         </div>
-                        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:20 }}>
+                        <div className="landing-team-grid">
                             {[
                                 { name:'Dinesh Sonwane',    role:'Team Leader',        color:'#8B5CF6', initials:'DS' },
                                 { name:'Jitendra Kulkarni', role:'Team Member',        color:'#06b6d4', initials:'JK' },
@@ -1080,11 +1080,11 @@ export default function LandingPage() {
                 <div style={{ position:'absolute', top:0, left:'10%', width:300, height:300, background:'radial-gradient(circle, rgba(102,126,234,0.08) 0%, transparent 70%)', borderRadius:'50%', filter:'blur(60px)', pointerEvents:'none' }}/>
                 <div style={{ position:'absolute', bottom:0, right:'10%', width:400, height:400, background:'radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%)', borderRadius:'50%', filter:'blur(80px)', pointerEvents:'none' }}/>
 
-                {/* main grid - 3 columns: left, center, right */}
-                <div style={{ maxWidth:1200, margin:'0 auto', padding:'50px 40px 40px', display:'grid', gridTemplateColumns:'1fr auto 1fr', gap:60, position:'relative', zIndex:1, alignItems:'start' }}>
+                {/* main responsive footer grid */}
+                <div className="landing-footer-grid">
 
                     {/* LEFT - DeepVision Brand */}
-                    <div>
+                    <div className="landing-footer-brand">
                         <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16 }}>
                             <div style={{ width:40, height:40, borderRadius:12, background:'linear-gradient(135deg, rgba(102,126,234,0.15), rgba(139,92,246,0.15))', display:'flex', alignItems:'center', justifyContent:'center', border:'1px solid rgba(102,126,234,0.2)' }}>
                                 <img src={logoImg} alt="DeepVision" style={{ height:24, width:24, objectFit:'contain' }}/>
@@ -1104,7 +1104,7 @@ export default function LandingPage() {
                     </div>
 
                     {/* CENTER - Quick Links */}
-                    <div style={{ minWidth:200 }}>
+                    <div className="landing-footer-links">
                         <div style={{ fontSize:'0.7rem', fontWeight:900, color:'var(--text-primary)', textTransform:'uppercase', letterSpacing:'0.16em', marginBottom:20, paddingBottom:12, borderBottom:'2px solid transparent', backgroundImage:'linear-gradient(90deg, var(--border-color) 0%, transparent 100%)', backgroundPosition:'0 100%', backgroundSize:'100% 2px', backgroundRepeat:'no-repeat' }}>
                             Quick Links
                         </div>
@@ -1126,14 +1126,14 @@ export default function LandingPage() {
                     </div>
 
                     {/* RIGHT - Connect */}
-                    <div style={{ textAlign:'right' }}>
+                    <div className="landing-footer-connect">
                         <div style={{ fontSize:'0.7rem', fontWeight:900, color:'var(--text-primary)', textTransform:'uppercase', letterSpacing:'0.16em', marginBottom:20, paddingBottom:12, borderBottom:'2px solid transparent', backgroundImage:'linear-gradient(90deg, transparent 0%, var(--border-color) 100%)', backgroundPosition:'0 100%', backgroundSize:'100% 2px', backgroundRepeat:'no-repeat' }}>
                             Connect With Us
                         </div>
                         <p style={{ color:'var(--text-secondary)', fontSize:'0.88rem', lineHeight:1.6, marginBottom:20, fontWeight:450 }}>
                             Stay updated with latest news and features.
                         </p>
-                        <div style={{ display:'flex', gap:10, flexWrap:'wrap', justifyContent:'flex-end' }}>
+                        <div className="landing-footer-socials">
                             {[
                                 { Icon:Linkedin, label:'LinkedIn', color:'#0A66C2', bgGradient:'linear-gradient(135deg, #0A66C2, #004182)', href:'https://www.linkedin.com/in/dinesh-sonawane-827360343/' },
                                 { Icon:Github, label:'GitHub', color:'#6e5494', bgGradient:'linear-gradient(135deg, #6e5494, #4a3a6a)', href:'https://github.com/sonawanewdinesh18' },
@@ -1165,8 +1165,8 @@ export default function LandingPage() {
 
                 {/* bottom bar */}
                 <div style={{ borderTop:'1px solid var(--border-color)', background:'rgba(0,0,0,0.02)', position:'relative', zIndex:1 }}>
-                    <div style={{ maxWidth:1200, margin:'0 auto', padding:'22px 40px', display:'flex', alignItems:'center', justifyContent:'center', flexWrap:'wrap', gap:16 }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:20, flexWrap:'wrap' }}>
+                    <div style={{ maxWidth:1200, margin:'0 auto', padding:'22px 24px', display:'flex', alignItems:'center', justifyContent:'center', flexWrap:'wrap', gap:16 }}>
+                        <div className="landing-footer-bottom-content" style={{ display:'flex', alignItems:'center', gap:20, flexWrap:'wrap', justifyContent:'center' }}>
                             <p style={{ color:'var(--text-muted)', fontSize:'0.85rem', margin:0, fontWeight:500 }}>
                                 © 2026 DeepVision Inc. All rights reserved.
                             </p>
