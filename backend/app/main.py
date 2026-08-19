@@ -78,16 +78,40 @@ def create_application() -> FastAPI:
         expose_headers=["*"],
     )
 
-    # 3. Real-Time No-Cache Middleware (Ensures clients always receive fresh database data)
+    # 3. Real-Time No-Cache & Universal CORS Enforcer Middleware
     @app.middleware("http")
     async def add_no_cache_headers(request, call_next):
+        origin = request.headers.get("origin")
         if request.method == "OPTIONS":
-            return await call_next(request)
-        response = await call_next(request)
+            response = await call_next(request)
+            if origin:
+                response.headers["Access-Control-Allow-Origin"] = origin
+                response.headers["Access-Control-Allow-Credentials"] = "true"
+                response.headers["Access-Control-Allow-Methods"] = "*"
+                response.headers["Access-Control-Allow-Headers"] = "*"
+            return response
+
+        try:
+            response = await call_next(request)
+        except Exception as exc:
+            logger.exception(f"Unhandled error in HTTP middleware: {exc}")
+            from fastapi.responses import JSONResponse
+            response = JSONResponse(
+                status_code=500,
+                content={"error": {"code": "INTERNAL_SERVER_ERROR", "message": str(exc)}}
+            )
+
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
+        if origin:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Allow-Methods"] = "*"
+            response.headers["Access-Control-Allow-Headers"] = "*"
+            response.headers["Access-Control-Expose-Headers"] = "*"
         return response
+
 
     # 4. Mount Routers
     app.include_router(api_v1_router)

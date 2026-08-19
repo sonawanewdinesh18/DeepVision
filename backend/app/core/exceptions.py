@@ -100,10 +100,15 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
     )
 
 
+from fastapi.exceptions import HTTPException as FastAPIHTTPException
+
+
 def setup_exception_handlers(app: FastAPI) -> None:
     """Attach global exception handlers to the FastAPI app instance."""
     app.add_exception_handler(CustomAPIException, custom_api_exception_handler)
+    app.add_exception_handler(FastAPIHTTPException, standard_http_exception_handler)
     app.add_exception_handler(StarletteHTTPException, standard_http_exception_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(Exception, generic_exception_handler)
+
 

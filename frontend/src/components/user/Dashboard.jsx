@@ -43,8 +43,18 @@ const Dashboard = ({ setActiveView, refreshTrigger }) => {
       setError(null);
       
       // Fetch user statistics
-      const statsResponse = await userApi.getStats();
-      setStats(statsResponse.data);
+      try {
+        const statsResponse = await userApi.getStats();
+        setStats(statsResponse.data);
+      } catch (statsErr) {
+        console.warn('Failed to fetch stats, using defaults:', statsErr);
+        setStats({
+          total_detections: 0,
+          authentic_count: 0,
+          deepfake_count: 0,
+          last_detection_at: null
+        });
+      }
 
       // Fetch analytics chart data (last 7 days)
       try {
@@ -55,12 +65,18 @@ const Dashboard = ({ setActiveView, refreshTrigger }) => {
       }
       
     } catch (error) {
-      console.error('Failed to fetch dashboard data:', error);
-      setError(error.message || 'Failed to load dashboard data');
+      console.error('Dashboard data fallback:', error);
+      setStats({
+        total_detections: 0,
+        authentic_count: 0,
+        deepfake_count: 0,
+        last_detection_at: null
+      });
     } finally {
       setLoading(false);
     }
   };
+
 
   const formatTimeAgo = (dateString) => {
     const date = new Date(dateString);
