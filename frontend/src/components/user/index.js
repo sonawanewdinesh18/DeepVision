@@ -9,3 +9,5 @@ export { default as DetectionResult } from './DetectionResult';
 export { default as DetectionHistory} from './DetectionHistory';
 export { default as HistoryPanel }    from './HistoryPanel';
 export { default as Settings }        from './Settings';
+export { default as MobileBottomNav } from './MobileBottomNav';
+
