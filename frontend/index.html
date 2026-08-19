@@ -28,10 +28,45 @@
   <link rel="icon" type="image/png" href="/src/assets/LOGO.png" />
 
   <!-- Preconnect to critical origins — reduces connection overhead -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://iklzpflykgtpyzgniood.supabase.co" crossorigin />
   <link rel="dns-prefetch" href="https://deepvision-42o7.onrender.com" />
+
+  <!--
+    Google Fonts — non-blocking load strategy:
+    1. `preconnect` to fonts.googleapis.com (no crossorigin — same-origin handshake)
+    2. Fetch the font CSS as a print stylesheet (zero render cost)
+    3. `onload` swaps it to `all` so it applies once downloaded
+    4. `<noscript>` fallback for JS-disabled environments
+    LCP impact: Inter is now fetched in parallel with HTML parsing instead of
+    blocking render inside a CSS @import waterfall.
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    rel="preload"
+    as="style"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+  />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    media="print"
+    onload="this.media='all'"
+  />
+  <noscript>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    />
+  </noscript>
+
+  <!--
+    modulepreload for the JS entry — tells the browser to fetch + parse the
+    module graph early (during HTML parsing) so script compilation doesn't
+    compete with the LCP paint. Vite replaces this with the hashed filename
+    at build time via its HTML transform plugin.
+  -->
+  <link rel="modulepreload" href="/src/main.jsx" />
 </head>
 
 <body>
