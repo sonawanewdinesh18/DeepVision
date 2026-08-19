@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { FileVideo, CheckCircle, AlertTriangle, Target, Upload, TrendingUp, BarChart2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { userApi, detectionApi } from '@/services/api';
@@ -27,14 +27,18 @@ const Dashboard = ({ setActiveView, refreshTrigger }) => {
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+  const [, startTransition] = useTransition();
+
   // Get user's full name
-  const userName = user?.user_metadata?.full_name || 
-                   user?.email?.split('@')[0] || 
+  const userName = user?.user_metadata?.full_name ||
+                   user?.email?.split('@')[0] ||
                    'User';
 
   useEffect(() => {
-    fetchDashboardData();
+    // Defer data fetching so the LCP element (userName heading) paints first
+    startTransition(() => {
+      fetchDashboardData();
+    });
   }, [refreshTrigger]);
 
   const fetchDashboardData = async () => {
