@@ -15,8 +15,8 @@ import { supabase } from '@/lib/supabase';
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Retry configuration
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000; // 1 second
+const MAX_RETRIES = 5;
+const RETRY_DELAY = 2000; // 2 seconds
 const RETRY_STATUS_CODES = [408, 429, 500, 502, 503, 504];
 
 const api = axios.create({
@@ -36,12 +36,13 @@ api.interceptors.request.use(async (config) => {
   return config;
 }, (error) => Promise.reject(error));
 
-/* ─── Response interceptor — handle global errors ───────────── */
+/* ─── Response interceptor — handle global errors & cold starts ─── */
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const config = error.config;
     const status = error.response?.status;
+    const isNetworkError = !error.response || error.code === 'ERR_NETWORK' || error.message === 'Network Error';
 
     // 401 Unauthorized — token expired or invalid; sign out
     if (status === 401) {
@@ -50,29 +51,19 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Retry logic for specific status codes
-    if (
-      RETRY_STATUS_CODES.includes(status) &&
-      config &&
-      !config.__retryCount
-    ) {
-      config.__retryCount = 0;
-    }
+    // Auto-retry on Render cold starts (network errors or 5xx gateway codes)
+    const shouldRetry = isNetworkError || (status && RETRY_STATUS_CODES.includes(status));
 
-    if (
-      config &&
-      config.__retryCount !== undefined &&
-      config.__retryCount < MAX_RETRIES
-    ) {
-      config.__retryCount += 1;
+    if (shouldRetry && config) {
+      config.__retryCount = config.__retryCount || 0;
 
-      // Exponential backoff
-      const delay = RETRY_DELAY * Math.pow(2, config.__retryCount - 1);
-
-      console.log(`Retrying request (${config.__retryCount}/${MAX_RETRIES}) after ${delay}ms...`);
-
-      await new Promise(resolve => setTimeout(resolve, delay));
-      return api(config);
+      if (config.__retryCount < MAX_RETRIES) {
+        config.__retryCount += 1;
+        const delay = RETRY_DELAY * Math.min(config.__retryCount, 3);
+        console.log(`Backend waking up / retrying (${config.__retryCount}/${MAX_RETRIES}) after ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return api(config);
+      }
     }
 
     // Normalize error shape to match backend format
@@ -80,11 +71,12 @@ api.interceptors.response.use(
       error.response?.data?.error?.message ||
       error.response?.data?.message ||
       error.message ||
-      'An unexpected error occurred.';
+      'Server is warming up. Please try again in a moment.';
 
     return Promise.reject(new Error(message));
   },
 );
+
 
 export default api;
 
@@ -310,4 +302,10 @@ export const adminApi = {
 
   // Subscription and pricing management removed
 };
+
+/* ─── Health API helpers ─────────────────────────────────────── */
+export const healthApi = {
+  checkHealth: () => api.get('/health'),
+};
+
 
