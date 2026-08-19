@@ -9,9 +9,20 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  optimizeDeps: {
+    // framer-motion and lucide-react use dynamic imports internally; excluding
+    // them avoids Vite pre-bundler mishandling that causes extra dev-server
+    // round-trips on first load.
+    exclude: ['framer-motion', 'lucide-react'],
+  },
   build: {
     // Raise warning threshold — our vendor chunks are intentionally larger
     chunkSizeWarningLimit: 600,
+    // Target modern browsers — avoids unnecessary syntax transforms that
+    // increase parse cost (e.g. class field polyfills, optional chaining rewrites)
+    target: 'es2020',
+    // esbuild minifier is faster and produces comparable output to terser
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: {
@@ -19,8 +30,12 @@ export default defineConfig({
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           // Supabase auth — needed early but separate from UI
           'vendor-supabase': ['@supabase/supabase-js'],
-          // UI / animation libs — deferred, not needed for LCP
-          'vendor-ui': ['framer-motion', 'lucide-react', 'sonner'],
+          // Animation library — deferred, not needed for LCP
+          'vendor-framer': ['framer-motion'],
+          // Icon library — large tree, separate chunk for better cache granularity
+          'vendor-icons': ['lucide-react'],
+          // Toast notifications
+          'vendor-sonner': ['sonner'],
           // HTTP client
           'vendor-axios': ['axios'],
         },

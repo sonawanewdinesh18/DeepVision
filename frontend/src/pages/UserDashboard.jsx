@@ -1,19 +1,47 @@
 /**
  * UserDashboard
  * Main user interface with Responsive Desktop & Native Mobile layouts.
+ *
+ * Performance note: only the default view (Dashboard) and the shell
+ * components (Navbar, Sidebar, MobileBottomNav) are imported eagerly.
+ * All other sub-views are lazy-loaded so their JS is excluded from the
+ * initial bundle, reducing main-thread compile time and LCP render delay.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import {
   Navbar,
   Sidebar,
-  Dashboard,
-  UploadMedia,
-  DetectionResult,
-  DetectionHistory,
-  Settings,
+  Dashboard,          // default view — keep eager
   MobileBottomNav,
 } from '@/components/user';
+
+// Non-initial views — only fetched when the user navigates to them
+const UploadMedia      = lazy(() => import('@/components/user/UploadMedia'));
+const DetectionResult  = lazy(() => import('@/components/user/DetectionResult'));
+const DetectionHistory = lazy(() => import('@/components/user/DetectionHistory'));
+const Settings         = lazy(() => import('@/components/user/Settings'));
+
+/** Minimal skeleton shown while a lazy view is loading */
+function ViewSkeleton() {
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 16,
+      padding: 8,
+      animation: 'pulse 1.5s ease-in-out infinite',
+    }}>
+      {[120, 80, 200, 80].map((h, i) => (
+        <div key={i} style={{
+          height: h,
+          borderRadius: 12,
+          background: 'var(--bg-quaternary, rgba(0,0,0,0.08))',
+        }} />
+      ))}
+    </div>
+  );
+}
 
 const VIEW_MAP = {
   dashboard: Dashboard,
@@ -89,13 +117,16 @@ export default function UserDashboard() {
         {/* Main content area */}
         <main className="ud-main-content">
           <div className="ud-content-wrapper">
-            <ActiveComponent 
-              setActiveView={handleNavigate} 
-              detectionId={detectionId}
-              initialResult={initialResult}
-              refreshTrigger={refreshTrigger}
-              triggerRefresh={triggerRefresh}
-            />
+            {/* Suspense boundary: catches the lazy-loaded view chunks */}
+            <Suspense fallback={<ViewSkeleton />}>
+              <ActiveComponent
+                setActiveView={handleNavigate}
+                detectionId={detectionId}
+                initialResult={initialResult}
+                refreshTrigger={refreshTrigger}
+                triggerRefresh={triggerRefresh}
+              />
+            </Suspense>
           </div>
         </main>
       </div>
