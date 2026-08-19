@@ -1,10 +1,19 @@
 {
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://deepvision-42o7.onrender.com/api/:path*"
+    },
+    {
+      "source": "/health",
+      "destination": "https://deepvision-42o7.onrender.com/health"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
+
   "headers": [
     {
       "source": "/assets/(.*)",
