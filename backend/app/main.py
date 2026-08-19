@@ -15,7 +15,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.exceptions import setup_exception_handlers
-from app.engine.model import load_model, ModelLoadError
 from app.api.v1.router import api_v1_router
 
 # Configure structured logging
@@ -26,21 +25,17 @@ logging.basicConfig(
 logger = logging.getLogger("deepvision")
 
 
-import asyncio
-
-
 # ── Application Lifespan ──────────────────────────────────────
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
-    Lifespan events:
-      - Startup: Immediate port binding and background model pre-warming.
-      - Shutdown: Release GPU/CPU resources.
+    Lifespan events.
+    Model is loaded lazily on first inference request — this keeps startup
+    instant and the health check green immediately (important for Render free
+    tier where cold starts are time-limited).
     """
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION} ({settings.ENVIRONMENT})...")
-    # Initiate non-blocking model download and warm-up in background thread
-    asyncio.create_task(asyncio.to_thread(load_model))
     yield
     logger.info("Shutting down DeepVision API...")
 
@@ -115,11 +110,14 @@ def create_application() -> FastAPI:
     @app.api_route("/", methods=["GET", "HEAD"], tags=["Health"], summary="API Root / Status")
     @app.api_route("/health", methods=["GET", "HEAD"], tags=["Health"], summary="Health check probe")
     def health_check():
+        from app.engine.model import get_model_status
+        model_status = get_model_status()
         return {
             "status": "healthy",
             "app": settings.APP_NAME,
             "version": settings.APP_VERSION,
             "environment": settings.ENVIRONMENT,
+            "model": model_status,
         }
 
     return app
