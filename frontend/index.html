@@ -27,6 +27,58 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="/src/assets/LOGO.png" />
 
+  <!--
+    CRITICAL CSS — inlined to eliminate render-blocking stylesheet delay.
+    Contains only the tokens and resets required to paint the LCP element
+    (a <p> text node) with the correct colors and layout on first frame.
+    The full stylesheet (index.css) still loads normally and overrides these.
+
+    Why: DevTools trace shows the external CSS sheet adds ~11ms of
+    render-blocking time even when the network is fast. Inlining these
+    critical tokens means the browser can paint immediately after HTML parse,
+    without waiting for the stylesheet download + parse cycle.
+  -->
+  <style>
+    /* ── Design tokens: dark theme (default) ───────────────────────────── */
+    :root {
+      --color-primary:       #8b5cf6;
+      --color-primary-light: #a78bfa;
+      --color-primary-dark:  #5B21B6;
+      --color-primary-glow:  rgba(139, 92, 246, 0.25);
+      --bg-base:             #0a0a0f;
+      --bg-surface:          #111118;
+      --bg-card:             #16161f;
+      --bg-quaternary:       rgba(255,255,255,0.06);
+      --text-primary:        #f0f0fa;
+      --text-secondary:      #9898b8;
+      --text-muted:          #5c5c78;
+      --border-color:        rgba(255,255,255,0.07);
+      --transition-slow:     400ms ease;
+    }
+
+    /* ── Minimal resets: prevent layout shift before full CSS loads ─────── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { font-size: 16px; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* ── Root shell: prevents height collapse before React mounts ───────── */
+    #root { min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* ── Skeleton pulse animation (used by lazy Suspense fallback) ───────── */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+  </style>
+
   <!-- Preconnect to critical origins — reduces connection overhead -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://iklzpflykgtpyzgniood.supabase.co" crossorigin />
@@ -59,14 +111,6 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
     />
   </noscript>
-
-  <!--
-    modulepreload for the JS entry — tells the browser to fetch + parse the
-    module graph early (during HTML parsing) so script compilation doesn't
-    compete with the LCP paint. Vite replaces this with the hashed filename
-    at build time via its HTML transform plugin.
-  -->
-  <link rel="modulepreload" href="/src/main.jsx" />
 </head>
 
 <body>
@@ -74,4 +118,4 @@
   <script type="module" src="/src/main.jsx"></script>
 </body>
 
-</html>
+</html>
