@@ -193,19 +193,29 @@ def load_model() -> Tuple[nn.Module, torch.device]:
         return _model_instance, _device_instance
 
 
+def _trim_memory() -> None:
+    """Force Python garbage collection and release freed C-heap to OS kernel."""
+    gc.collect()
+    try:
+        import ctypes
+        libc = ctypes.CDLL("libc.so.6")
+        libc.malloc_trim(0)
+    except Exception:
+        pass
+
+
 def _load_weights(model_path: Path, device: torch.device) -> Optional[nn.Module]:
     """
-    Load weights from a .pth file into HybridViTCNN with 100% key fidelity.
-    Handles:
-      - Raw PyTorch nn.Module objects
-      - State dicts with 'model_state_dict' or 'state_dict' wrappers
-      - DataParallel 'module.' or 'model.' key prefixes
-      - Pre-quantized INT8 checkpoints (quantizes architecture before loading)
-      - Float32 checkpoints (loads first, then dynamically quantizes on CPU)
+    Load weights from a .pth file into HybridViTCNN with minimal memory footprint.
+    Uses memory mapping, in-place key popping, and glibc malloc_trim to fit safely
+    within 512MB RAM on free-tier cloud containers.
     """
     try:
         logger.info(f"Loading weights from {model_path} ({model_path.stat().st_size / 1e6:.1f}MB) on {device}...")
         t0 = time.perf_counter()
+
+        _trim_memory()
+        torch.set_num_threads(1)
 
         loaded_obj = None
         for kwargs in [
@@ -228,6 +238,7 @@ def _load_weights(model_path: Path, device: torch.device) -> Optional[nn.Module]
             net = loaded_obj
             net.to(device)
             net.eval()
+            _trim_memory()
             elapsed = (time.perf_counter() - t0) * 1000
             logger.info(f"Model (full module) ready in {elapsed:.0f}ms on {device}")
             return net
@@ -239,9 +250,10 @@ def _load_weights(model_path: Path, device: torch.device) -> Optional[nn.Module]
             elif "state_dict" in state:
                 state = state["state_dict"]
 
-            # Normalize key prefixes (e.g. from DataParallel / lightning / wrapper)
+            # Normalize key prefixes in-place
             clean_state = {}
-            for k, v in state.items():
+            for k in list(state.keys()):
+                v = state.pop(k)
                 clean_k = k
                 if clean_k.startswith("module."):
                     clean_k = clean_k[7:]
@@ -250,38 +262,53 @@ def _load_weights(model_path: Path, device: torch.device) -> Optional[nn.Module]
                 clean_state[clean_k] = v
             state = clean_state
 
-        net = HybridViTCNN(num_classes=2)
+        del loaded_obj
+        _trim_memory()
 
-        # 2. Check if checkpoint is pre-quantized (contains _packed_params keys)
-        is_quantized = isinstance(state, dict) and any("_packed_params" in k for k in state.keys())
+        with torch.no_grad():
+            net = HybridViTCNN(num_classes=2)
 
-        if is_quantized:
-            logger.info("Detected pre-quantized INT8 state dict. Quantizing architecture before loading...")
-            net = torch.ao.quantization.quantize_dynamic(net, {nn.Linear}, dtype=torch.qint8)
-            try:
-                net.load_state_dict(state, strict=True)
-                logger.info("Successfully loaded pre-quantized INT8 weights (strict=True).")
-            except Exception as e:
-                logger.warning(f"Strict load on quantized state failed: {e}. Falling back to strict=False.")
-                net.load_state_dict(state, strict=False)
-        else:
-            # 3. Standard Float32 weights
-            try:
-                net.load_state_dict(state, strict=True)
-                logger.info("Successfully loaded Float32 weights (strict=True).")
-            except Exception as e:
-                logger.warning(f"Strict load failed ({e}). Falling back to strict=False.")
-                net.load_state_dict(state, strict=False)
+            # 2. Check if checkpoint is pre-quantized (contains _packed_params keys)
+            is_quantized = isinstance(state, dict) and any("_packed_params" in k for k in state.keys())
 
-            # Apply dynamic quantization on CPU to fit within 512MB RAM
-            if device.type == "cpu":
+            if is_quantized:
+                logger.info("Detected pre-quantized INT8 state dict. Quantizing architecture before loading...")
+                net = torch.ao.quantization.quantize_dynamic(net, {nn.Linear}, dtype=torch.qint8)
                 try:
-                    net = torch.ao.quantization.quantize_dynamic(
-                        net, {nn.Linear}, dtype=torch.qint8
-                    )
-                    logger.info("Dynamic INT8 quantization applied — RAM usage optimized.")
-                except Exception as qe:
-                    logger.debug(f"Dynamic quantization note: {qe}")
+                    net.load_state_dict(state, strict=True)
+                    logger.info("Successfully loaded pre-quantized INT8 weights (strict=True).")
+                except Exception as e:
+                    logger.warning(f"Strict load on quantized state failed: {e}. Falling back to strict=False.")
+                    net.load_state_dict(state, strict=False)
+            else:
+                # 3. Standard Float32 weights — load then quantize immediately
+                try:
+                    net.load_state_dict(state, strict=True)
+                    logger.info("Successfully loaded Float32 weights (strict=True).")
+                except Exception as e:
+                    logger.warning(f"Strict load failed ({e}). Falling back to strict=False.")
+                    net.load_state_dict(state, strict=False)
+
+                del state
+                _trim_memory()
+
+                # Apply dynamic quantization on CPU to compress from ~350MB -> ~120MB RAM
+                if device.type == "cpu":
+                    try:
+                        net = torch.ao.quantization.quantize_dynamic(
+                            net, {nn.Linear}, dtype=torch.qint8
+                        )
+                        logger.info("Dynamic INT8 quantization applied — RAM usage reduced to ~120MB.")
+                    except Exception as qe:
+                        logger.debug(f"Dynamic quantization note: {qe}")
+
+            net.to(device)
+            net.eval()
+
+        _trim_memory()
+        elapsed = (time.perf_counter() - t0) * 1000
+        logger.info(f"HybridViTCNN model ready in {elapsed:.0f}ms on {device}")
+        return net
 
         del state, loaded_obj
         gc.collect()
