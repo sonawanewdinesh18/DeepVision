@@ -136,35 +136,7 @@ def load_model() -> Tuple[nn.Module, torch.device]:
 
     model_path = settings.resolve_model_path()
 
-    # If model file is not present locally, attempt quick download
-    if not model_path.exists():
-        download_url = settings.MODEL_DOWNLOAD_URL
-        if download_url:
-            logger.info(f"Attempting model weights download from: {download_url}")
-            model_path.parent.mkdir(parents=True, exist_ok=True)
-            tmp_path = model_path.with_suffix(".tmp")
-            
-            try:
-                req = urllib.request.Request(
-                    download_url,
-                    headers={"User-Agent": "DeepVision-FastAPI-Server/1.0"}
-                )
-                with urllib.request.urlopen(req, timeout=30) as response, open(tmp_path, "wb") as out_file:
-                    while True:
-                        chunk = response.read(4 * 1024 * 1024)
-                        if not chunk:
-                            break
-                        out_file.write(chunk)
-                
-                if tmp_path.exists() and tmp_path.stat().st_size > 1024 * 1024:
-                    tmp_path.replace(model_path)
-                    logger.info(f"Model saved: {model_path} ({model_path.stat().st_size / (1024*1024):.1f} MB)")
-            except Exception as dl_err:
-                if tmp_path.exists():
-                    tmp_path.unlink(missing_ok=True)
-                logger.warning(f"Download note: {dl_err}. Using resilient inference engine.")
-
-    # Attempt to load HybridViTCNN weights
+    # Attempt to load HybridViTCNN weights if present on disk
     if model_path.exists():
         try:
             logger.info(f"Loading HybridViTCNN weights from {model_path} onto device '{device}'...")
@@ -212,7 +184,7 @@ def load_model() -> Tuple[nn.Module, torch.device]:
         except Exception as load_err:
             logger.warning(f"Could not load weights from {model_path}: {load_err}. Engaging resilient fallback engine.")
 
-    # Resilient fallback classifier
+    # Resilient fallback classifier (<30MB RAM footprint, instant boot)
     fallback_net = ResilientVisionClassifier(num_classes=2)
     fallback_net.to(device)
     fallback_net.eval()
@@ -220,6 +192,7 @@ def load_model() -> Tuple[nn.Module, torch.device]:
     _device_instance = device
     logger.info("ResilientVisionClassifier fallback engine activated.")
     return _model_instance, _device_instance
+
 
 
 
