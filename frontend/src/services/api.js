@@ -21,7 +21,7 @@ const RETRY_STATUS_CODES = [408, 429, 500, 502, 503, 504];
 
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 30_000, // 30 seconds
+  timeout: 120_000, // 120 seconds to allow cold-start on-demand AI inference
   headers: {
     'Content-Type': 'application/json',
   },
