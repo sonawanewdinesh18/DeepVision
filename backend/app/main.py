@@ -81,6 +81,8 @@ def create_application() -> FastAPI:
     # 3. Real-Time No-Cache Middleware (Ensures clients always receive fresh database data)
     @app.middleware("http")
     async def add_no_cache_headers(request, call_next):
+        if request.method == "OPTIONS":
+            return await call_next(request)
         response = await call_next(request)
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
         response.headers["Pragma"] = "no-cache"
