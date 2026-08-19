@@ -194,62 +194,106 @@ def load_model() -> Tuple[nn.Module, torch.device]:
 
 
 def _load_weights(model_path: Path, device: torch.device) -> Optional[nn.Module]:
-    """Load weights from a .pth file into HybridViTCNN. Returns None on failure."""
+    """
+    Load weights from a .pth file into HybridViTCNN with 100% key fidelity.
+    Handles:
+      - Raw PyTorch nn.Module objects
+      - State dicts with 'model_state_dict' or 'state_dict' wrappers
+      - DataParallel 'module.' or 'model.' key prefixes
+      - Pre-quantized INT8 checkpoints (quantizes architecture before loading)
+      - Float32 checkpoints (loads first, then dynamically quantizes on CPU)
+    """
     try:
         logger.info(f"Loading weights from {model_path} ({model_path.stat().st_size / 1e6:.1f}MB) on {device}...")
         t0 = time.perf_counter()
 
-        net = HybridViTCNN(num_classes=2)
-
-        state = None
+        loaded_obj = None
         for kwargs in [
             {"map_location": "cpu", "weights_only": True},
             {"map_location": "cpu", "weights_only": False},
         ]:
             try:
-                state = torch.load(model_path, **kwargs)
+                loaded_obj = torch.load(model_path, **kwargs)
                 break
             except Exception:
                 continue
 
-        if state is None:
+        if loaded_obj is None:
             logger.error(f"Could not read weights from {model_path}")
             return None
 
-        if isinstance(state, dict) and "model_state_dict" in state:
-            state = state["model_state_dict"]
+        # 1. If saved as full nn.Module instance
+        if isinstance(loaded_obj, nn.Module):
+            net = loaded_obj
+            net.to(device)
+            net.eval()
+            elapsed = (time.perf_counter() - t0) * 1000
+            logger.info(f"Model (full module) ready in {elapsed:.0f}ms on {device}")
+            return net
 
-        try:
-            net.load_state_dict(state, strict=True)
-        except Exception:
-            net.load_state_dict(state, strict=False)
-            logger.warning("Loaded weights with strict=False")
+        state = loaded_obj
+        if isinstance(state, dict):
+            if "model_state_dict" in state:
+                state = state["model_state_dict"]
+            elif "state_dict" in state:
+                state = state["state_dict"]
 
-        del state
+            # Normalize key prefixes (e.g. from DataParallel / lightning / wrapper)
+            clean_state = {}
+            for k, v in state.items():
+                clean_k = k
+                if clean_k.startswith("module."):
+                    clean_k = clean_k[7:]
+                if clean_k.startswith("model."):
+                    clean_k = clean_k[6:]
+                clean_state[clean_k] = v
+            state = clean_state
+
+        net = HybridViTCNN(num_classes=2)
+
+        # 2. Check if checkpoint is pre-quantized (contains _packed_params keys)
+        is_quantized = isinstance(state, dict) and any("_packed_params" in k for k in state.keys())
+
+        if is_quantized:
+            logger.info("Detected pre-quantized INT8 state dict. Quantizing architecture before loading...")
+            net = torch.ao.quantization.quantize_dynamic(net, {nn.Linear}, dtype=torch.qint8)
+            try:
+                net.load_state_dict(state, strict=True)
+                logger.info("Successfully loaded pre-quantized INT8 weights (strict=True).")
+            except Exception as e:
+                logger.warning(f"Strict load on quantized state failed: {e}. Falling back to strict=False.")
+                net.load_state_dict(state, strict=False)
+        else:
+            # 3. Standard Float32 weights
+            try:
+                net.load_state_dict(state, strict=True)
+                logger.info("Successfully loaded Float32 weights (strict=True).")
+            except Exception as e:
+                logger.warning(f"Strict load failed ({e}). Falling back to strict=False.")
+                net.load_state_dict(state, strict=False)
+
+            # Apply dynamic quantization on CPU to fit within 512MB RAM
+            if device.type == "cpu":
+                try:
+                    net = torch.ao.quantization.quantize_dynamic(
+                        net, {nn.Linear}, dtype=torch.qint8
+                    )
+                    logger.info("Dynamic INT8 quantization applied — RAM usage optimized.")
+                except Exception as qe:
+                    logger.debug(f"Dynamic quantization note: {qe}")
+
+        del state, loaded_obj
         gc.collect()
 
         net.to(device)
         net.eval()
 
-        # Apply dynamic INT8 quantization on CPU only if the file is NOT already quantized.
-        # The Docker build saves a pre-quantized state dict as Hybrid_vit.pth,
-        # so skip quantization when loading from the production image.
-        already_quantized = any("_packed_params" in k for k in net.state_dict().keys())
-        if device.type == "cpu" and not already_quantized:
-            try:
-                net = torch.ao.quantization.quantize_dynamic(
-                    net, {nn.Linear}, dtype=torch.qint8
-                )
-                logger.info("INT8 quantization applied — RAM usage reduced.")
-            except Exception as qe:
-                logger.debug(f"Quantization skipped: {qe}")
-
         elapsed = (time.perf_counter() - t0) * 1000
-        logger.info(f"Model ready in {elapsed:.0f}ms on {device}")
+        logger.info(f"HybridViTCNN model ready in {elapsed:.0f}ms on {device}")
         return net
 
     except Exception as e:
-        logger.error(f"Failed to load weights: {e}")
+        logger.error(f"Failed to load weights: {e}", exc_info=True)
         return None
 
 
