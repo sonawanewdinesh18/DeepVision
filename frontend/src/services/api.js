@@ -12,7 +12,11 @@
 import axios from 'axios';
 import { supabase } from '@/lib/supabase';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// In production (Vercel), VITE_API_URL should be empty/unset so all API calls
+// go through Vercel's own reverse proxy at /api/... (same origin = zero CORS issues).
+// In local dev, proxy is handled by vite.config.js, so also leave empty.
+// Only set VITE_API_URL if you want to bypass the proxy entirely.
+const BASE_URL = import.meta.env.VITE_API_URL || '';
 
 // Retry configuration
 const MAX_RETRIES = 5;
