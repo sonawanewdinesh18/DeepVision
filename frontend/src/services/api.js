@@ -18,9 +18,9 @@ import { supabase } from '@/lib/supabase';
 // Only set VITE_API_URL if you want to bypass the proxy entirely.
 const BASE_URL = import.meta.env.VITE_API_URL || '';
 
-// Retry configuration
-const MAX_RETRIES = 5;
-const RETRY_DELAY = 2000; // 2 seconds
+// Retry configuration — generous delays to cover Render free-tier cold start (up to 45s)
+const MAX_RETRIES = 8;
+const RETRY_DELAY = 5000; // 5 seconds per retry = up to 40 seconds total wait
 const RETRY_STATUS_CODES = [408, 429, 500, 502, 503, 504];
 
 const api = axios.create({
@@ -63,12 +63,36 @@ api.interceptors.response.use(
 
       if (config.__retryCount < MAX_RETRIES) {
         config.__retryCount += 1;
-        const delay = RETRY_DELAY * Math.min(config.__retryCount, 3);
+
+        // On first retry, notify the user that the server is waking up
+        if (config.__retryCount === 1) {
+          // Dynamically import toast to avoid circular deps
+          import('sonner').then(({ toast }) => {
+            toast.loading('🔄 Server is waking up, please wait...', {
+              id: 'server-wakeup',
+              duration: 50000,
+            });
+          }).catch(() => {});
+        }
+
+        const delay = RETRY_DELAY;
         console.log(`Backend waking up / retrying (${config.__retryCount}/${MAX_RETRIES}) after ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
-        return api(config);
+
+        // On final successful retry, dismiss the toast
+        const result = api(config);
+        result.then(() => {
+          import('sonner').then(({ toast }) => toast.dismiss('server-wakeup')).catch(() => {});
+        }).catch(() => {});
+        return result;
       }
     }
+
+    // All retries exhausted — dismiss wake-up toast and show final error
+    import('sonner').then(({ toast }) => {
+      toast.dismiss('server-wakeup');
+      toast.error('Server is temporarily unavailable. Please refresh the page in 30 seconds.', { duration: 8000 });
+    }).catch(() => {});
 
     // Normalize error shape to match backend format
     const message =
@@ -80,6 +104,7 @@ api.interceptors.response.use(
     return Promise.reject(new Error(message));
   },
 );
+
 
 
 export default api;
