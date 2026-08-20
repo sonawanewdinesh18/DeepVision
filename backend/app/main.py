@@ -31,24 +31,29 @@ logger = logging.getLogger("deepvision")
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     Application Lifespan Events.
-    Kicks off background model download and loading on boot so the model is
-    warmed up and resident in RAM before the first user inference request arrives.
+    If USE_HF_API is enabled, skips local PyTorch initialization to conserve RAM on Render.
+    Otherwise pre-warms local INT8 model in background.
     """
     import asyncio
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION} ({settings.ENVIRONMENT})...")
 
-    # Pre-warm model in background thread after a brief grace period so server starts 200 OK instantly
-    async def _warmup_model():
-        try:
-            await asyncio.sleep(5)
-            from app.engine.model import load_model
-            logger.info("Lifespan: Starting background model pre-warming...")
-            await asyncio.to_thread(load_model)
-            logger.info("Lifespan: Model successfully pre-warmed and ready.")
-        except Exception as e:
-            logger.warning(f"Lifespan: Background model pre-warming note: {e}")
+    from app.engine.predictor import is_hf_api_mode
 
-    asyncio.create_task(_warmup_model())
+    if is_hf_api_mode():
+        logger.info(f"Lifespan: Running in Remote Model API Mode ({settings.HF_API_URL or 'HF Space'}). Zero local PyTorch model RAM overhead.")
+    else:
+        # Pre-warm model in background thread after a brief grace period so server starts 200 OK instantly
+        async def _warmup_model():
+            try:
+                await asyncio.sleep(5)
+                from app.engine.model import load_model
+                logger.info("Lifespan: Starting background local model pre-warming...")
+                await asyncio.to_thread(load_model)
+                logger.info("Lifespan: Model successfully pre-warmed and ready.")
+            except Exception as e:
+                logger.warning(f"Lifespan: Background model pre-warming note: {e}")
+
+        asyncio.create_task(_warmup_model())
 
     yield
     logger.info("Shutting down DeepVision API...")
@@ -120,12 +125,22 @@ def create_application() -> FastAPI:
     # 4. Mount Routers
     app.include_router(api_v1_router)
 
-    # 4. Health & Status Endpoints
+    # 5. Health & Status Endpoints
     @app.api_route("/", methods=["GET", "HEAD"], tags=["Health"], summary="API Root / Status")
     @app.api_route("/health", methods=["GET", "HEAD"], tags=["Health"], summary="Health check probe")
     async def health_check():
-        from app.engine.model import get_model_status
-        model_status = get_model_status()
+        from app.engine.predictor import is_hf_api_mode
+        if is_hf_api_mode():
+            model_status = {
+                "loaded": True,
+                "mode": "hf_api",
+                "api_url": settings.HF_API_URL or os.getenv("HF_API_URL", ""),
+                "model_version": settings.MODEL_VERSION,
+            }
+        else:
+            from app.engine.model import get_model_status
+            model_status = get_model_status()
+
         return {
             "status": "healthy",
             "app": settings.APP_NAME,
