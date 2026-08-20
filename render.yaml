@@ -32,6 +32,11 @@ services:
         value: "104857600"
       - key: MAX_VIDEO_DURATION_SECONDS
         value: "120"
+      # ── Sightengine Vision API (set in Render Dashboard → Environment) ──
+      - key: SIGHTENGINE_API_USER
+        sync: false
+      - key: SIGHTENGINE_API_SECRET
+        sync: false
       # ── HF Space inference API (set to true to skip local PyTorch on Render) ──
       # Set USE_HF_API=true and HF_API_URL to your Space URL in Render dashboard.
       # This lets Render run with zero PyTorch RAM — model runs on HF Space instead.
