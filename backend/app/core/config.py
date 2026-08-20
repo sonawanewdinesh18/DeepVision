@@ -100,6 +100,10 @@ class Settings(BaseSettings):
         if local_float.is_file():
             return local_float.resolve()
 
+        local_quantized = backend_dir / "models" / "Hybrid_vit_quantized.pth"
+        if local_quantized.is_file():
+            return local_quantized.resolve()
+
         for name in ("Hybrid_vit_int8.pth", "Hybrid_vit.pth", "Hybrid_vit_quantized.pth"):
             dev = backend_dir.parent / "ai_models" / name
             if dev.is_file():
