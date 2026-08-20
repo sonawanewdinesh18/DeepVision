@@ -219,14 +219,15 @@ def _load_weights(model_path: Path, device: torch.device) -> Optional[nn.Module]
 
         loaded_obj = None
         for kwargs in [
+            {"map_location": "cpu", "weights_only": False, "mmap": True},
             {"map_location": "cpu", "weights_only": True, "mmap": True},
-            {"map_location": "cpu", "weights_only": True},
             {"map_location": "cpu", "weights_only": False},
         ]:
             try:
                 loaded_obj = torch.load(model_path, **kwargs)
                 break
-            except Exception:
+            except Exception as load_err:
+                logger.debug(f"torch.load attempt with {kwargs} failed: {load_err}")
                 continue
 
         if loaded_obj is None:
