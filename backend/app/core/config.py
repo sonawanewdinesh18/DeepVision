@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     MAX_VIDEO_SIZE_BYTES: int = 100 * 1024 * 1024
     MAX_VIDEO_DURATION_SECONDS: int = 120
 
+    # ── Sightengine Real-Time AI Vision API (Enterprise Mode) ─
+    SIGHTENGINE_API_USER: str = ""
+    SIGHTENGINE_API_SECRET: str = ""
+
     # ── HF Space Inference API (optional, for zero-RAM mode) ──
     USE_HF_API: bool = False
     HF_API_URL: str = ""
