@@ -431,44 +431,15 @@ def _call_sightengine_video(video_bytes: bytes) -> Optional[Tuple[float, str, Di
 
 def predict_image(image_bytes: bytes) -> Tuple[float, str, Dict[str, Any]]:
     """
-    Detect deepfake in an image.
-    Multi-tier architecture:
-      Tier 1: Ultra-fast Sightengine Cloud Vision API (zero RAM overhead)
-      Tier 2: Hugging Face Space API (if USE_HF_API=true)
-      Tier 3: Local PyTorch INT8 model (fallback)
+    Detect deepfake in an image using the custom HybridViTCNN (ViT-B/16 + EfficientNet-B0) AI model.
     """
-    # Tier 1: Sightengine Cloud AI
-    if settings.SIGHTENGINE_API_USER and settings.SIGHTENGINE_API_SECRET:
-        try:
-            res = _call_sightengine_image(image_bytes)
-            if res is not None:
-                return res
-        except Exception as err:
-            logger.warning(f"Tier 1 (Sightengine) error: {err}. Falling back to next tier...")
-
-    # Tier 2: HF Space API
-    if _USE_HF_API:
-        logger.info("Using HF Space API for inference.")
-        return _call_hf_api(image_bytes)
-
-    # Tier 3: Local PyTorch model
-    logger.info("Using local PyTorch model for inference.")
+    logger.info("Running deepfake detection with custom HybridViTCNN model.")
     return _predict_local_image(image_bytes)
 
 
 def predict_video(video_bytes: bytes) -> Tuple[float, str, Dict[str, Any]]:
     """
-    Detect deepfake in a video.
-    Multi-tier architecture with frame sampling and cloud/local execution.
+    Detect deepfake in a video using the custom HybridViTCNN (ViT-B/16 + EfficientNet-B0) AI model.
     """
-    # Tier 1: Sightengine Cloud AI
-    if settings.SIGHTENGINE_API_USER and settings.SIGHTENGINE_API_SECRET:
-        try:
-            res = _call_sightengine_video(video_bytes)
-            if res is not None:
-                return res
-        except Exception as err:
-            logger.warning(f"Tier 1 (Sightengine video) error: {err}. Falling back to local PyTorch...")
-
-    # Fallback to local PyTorch video processor
+    logger.info("Running video deepfake detection with custom HybridViTCNN model.")
     return _predict_local_video(video_bytes)
