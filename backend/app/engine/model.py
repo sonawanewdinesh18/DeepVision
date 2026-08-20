@@ -217,6 +217,17 @@ def _load_weights(model_path: Path, device: torch.device) -> Optional[nn.Module]
         _trim_memory()
         torch.set_num_threads(1)
 
+        # 0. Try TorchScript JIT loader first (instant zero-RAM deserialization)
+        try:
+            net = torch.jit.load(str(model_path), map_location=device)
+            net.eval()
+            _trim_memory()
+            elapsed = (time.perf_counter() - t0) * 1000
+            logger.info(f"HybridViTCNN TorchScript model ready in {elapsed:.0f}ms on {device}")
+            return net
+        except Exception as jit_err:
+            logger.debug(f"Not a TorchScript file ({jit_err}), falling back to PyTorch state_dict loader.")
+
         loaded_obj = None
         for kwargs in [
             {"map_location": "cpu", "weights_only": False, "mmap": True},
