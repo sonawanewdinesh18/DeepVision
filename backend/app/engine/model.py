@@ -244,23 +244,34 @@ def _load_weights(model_path: Path, device: torch.device) -> Optional[nn.Module]
             return net
 
         state = loaded_obj
+        metadata = getattr(state, "_metadata", None) if isinstance(state, dict) else None
         if isinstance(state, dict):
             if "model_state_dict" in state:
                 state = state["model_state_dict"]
+                if hasattr(state, "_metadata") and metadata is None:
+                    metadata = state._metadata
             elif "state_dict" in state:
                 state = state["state_dict"]
+                if hasattr(state, "_metadata") and metadata is None:
+                    metadata = state._metadata
 
-            # Normalize key prefixes in-place
-            clean_state = {}
-            for k in list(state.keys()):
-                v = state.pop(k)
-                clean_k = k
-                if clean_k.startswith("module."):
-                    clean_k = clean_k[7:]
-                if clean_k.startswith("model."):
-                    clean_k = clean_k[6:]
-                clean_state[clean_k] = v
-            state = clean_state
+            # Normalize key prefixes if needed while preserving _metadata
+            needs_rename = any(k.startswith("module.") or k.startswith("model.") for k in state.keys())
+            if needs_rename:
+                clean_state = {}
+                for k in list(state.keys()):
+                    v = state.pop(k)
+                    clean_k = k
+                    if clean_k.startswith("module."):
+                        clean_k = clean_k[7:]
+                    if clean_k.startswith("model."):
+                        clean_k = clean_k[6:]
+                    clean_state[clean_k] = v
+                if metadata is not None:
+                    setattr(clean_state, "_metadata", metadata)
+                state = clean_state
+            elif metadata is not None and not hasattr(state, "_metadata"):
+                setattr(state, "_metadata", metadata)
 
         del loaded_obj
         _trim_memory()
@@ -276,7 +287,7 @@ def _load_weights(model_path: Path, device: torch.device) -> Optional[nn.Module]
                 net = torch.ao.quantization.quantize_dynamic(net, {nn.Linear}, dtype=torch.qint8)
                 try:
                     net.load_state_dict(state, strict=True)
-                    logger.info("Successfully loaded pre-quantized INT8 weights (strict=True).")
+                    logger.info("Successfully loaded pre-quantized INT8 weights with 100% key fidelity.")
                 except Exception as e:
                     logger.warning(f"Strict load on quantized state failed: {e}. Falling back to strict=False.")
                     net.load_state_dict(state, strict=False)
