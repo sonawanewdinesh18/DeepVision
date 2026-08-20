@@ -321,16 +321,6 @@ def _load_weights(model_path: Path, device: torch.device) -> Optional[nn.Module]
         logger.info(f"HybridViTCNN model ready in {elapsed:.0f}ms on {device}")
         return net
 
-        del state, loaded_obj
-        gc.collect()
-
-        net.to(device)
-        net.eval()
-
-        elapsed = (time.perf_counter() - t0) * 1000
-        logger.info(f"HybridViTCNN model ready in {elapsed:.0f}ms on {device}")
-        return net
-
     except Exception as e:
         logger.error(f"Failed to load weights: {e}", exc_info=True)
         return None
